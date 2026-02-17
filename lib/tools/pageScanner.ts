@@ -59,6 +59,7 @@ export async function scanQuick(url: string) {
  * But: Extraction structurelle, visuelle et technique exhaustive.
  */
 export async function scanFullSite(url: string) {
+  console.log(`[Scanner Full] Scanning: ${url}`);
   const { chromium } = await import("playwright");
   let browser;
   try {
