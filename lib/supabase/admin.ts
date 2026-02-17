@@ -1,16 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Environment variables check
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Environment variables check with build-time fallbacks
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key';
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error("❌ ERREUR: Variables Supabase manquantes dans .env.local (URL ou SERVICE_ROLE_KEY)");
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn("⚠️ Variables Supabase manquantes ou invalides. Utilisation de placeholders pour le build.");
 }
 
 export const supabaseAdmin = createClient(
-  supabaseUrl || '',
-  supabaseServiceKey || '',
+  supabaseUrl,
+  supabaseServiceKey,
   {
     auth: {
       autoRefreshToken: false,
