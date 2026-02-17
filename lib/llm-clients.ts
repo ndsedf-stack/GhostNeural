@@ -1,10 +1,11 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
-// Clients initialization
-export const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-export const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Clients initialization handles missing keys during build by providing dummy strings
+// This prevents constructors from throwing and maintains type safety
+export const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'BUILD_TIME_DUMMY');
+export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'BUILD_TIME_DUMMY' });
+export const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'BUILD_TIME_DUMMY' });
 
 /**
  * Robust JSON extraction from LLM output.
