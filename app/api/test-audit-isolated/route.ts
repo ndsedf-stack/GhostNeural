@@ -7,6 +7,8 @@ import { runUltraAudit } from '@/lib/agents/audit';
 // Usage: GET http://localhost:3001/api/test-audit-isolated
 // ─────────────────────────────────────────────────────────────────────────────
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   console.log('🧪 TEST AUDIT AGENT — Données minimales\n');
 

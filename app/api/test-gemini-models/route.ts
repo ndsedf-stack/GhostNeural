@@ -2,17 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { gemini } from '@/lib/llm-clients';
 
 // Test route to list available Gemini models
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     // Try different model names that might work
     const modelsToTest = [
-      'gemini-pro',
-      'gemini-1.5-pro',
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-latest',
-      'gemini-1.0-pro',
-      'models/gemini-pro',
-      'models/gemini-1.5-pro'
+      'models/gemini-1.5-pro-latest',
+      'models/gemini-1.5-flash-latest',
+      'models/gemini-1.5-flash',
+      'models/gemini-1.5-pro',
+      'models/gemini-pro'
     ];
 
     const results = [];

@@ -7,6 +7,8 @@ import { runPipeline } from '@/lib/orchestrator-v2';
 // Usage: GET http://localhost:3001/api/test-pipeline-v2
 // ─────────────────────────────────────────────────────────────────────────────
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   console.log('🚀 TEST PIPELINE V2 — RDV Gurume (Restaurant Japonais)\n');
 
