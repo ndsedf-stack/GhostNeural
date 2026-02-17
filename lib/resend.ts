@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 
-const resendClient = new Resend(process.env.RESEND_API_KEY);
+// Resend client initialization handles missing key during build phase
+const resendClient = new Resend(process.env.RESEND_API_KEY || 're_build_placeholder');
 
 export const resend = {
   async sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
