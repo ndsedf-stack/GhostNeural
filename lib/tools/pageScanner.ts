@@ -59,11 +59,26 @@ export async function scanQuick(url: string) {
  * But: Extraction structurelle, visuelle et technique exhaustive.
  */
 export async function scanFullSite(url: string) {
-  console.log(`[Scanner Full] Scanning: ${url}`);
-  const { chromium } = await import("playwright");
-  let browser;
+  console.log(`[Scanner Full] Starting deep scan for: ${url}`);
+  
+  // Build-time guard
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    console.log('[Scanner Guard] Skipping Playwright during build phase.');
+    return null;
+  }
+
   try {
-    browser = await chromium.launch({ headless: true });
+    const { chromium } = await import("playwright");
+    
+    console.log(`[Scanner Full] Launching browser...`);
+    let browser;
+    try {
+      browser = await chromium.launch({ headless: true });
+    } catch (launchError: any) {
+      console.error("[Scanner Full] Browser launch error:", launchError.message);
+      return null;
+    }
+
     const context = await browser.newContext({
       viewport: { width: 1280, height: 800 },
       userAgent: 'Mozilla/5.0 GhostNeuralBot/1.0'
@@ -71,9 +86,16 @@ export async function scanFullSite(url: string) {
     const page = await context.newPage();
 
     // 1. Navigation & Basic Data
-    await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+    console.log(`[Scanner Full] Navigating to ${url} (waitUntil: load)...`);
+    try {
+      await page.goto(url, { waitUntil: "load", timeout: 30000 });
+    } catch (gotoError: any) {
+      console.warn(`[Scanner Full] Navigation timeout or error for ${url}:`, gotoError.message);
+      // On tente quand même de continuer si on a au moins le HTML de base
+    }
 
-    // 2. Sitemap & Robots.txt Discovery
+    // 2. Sitemap & Robots.txt Discovery (en parallèle)
+    console.log(`[Scanner Full] Checking sitemap & robots.txt...`);
     const baseUrl = new URL(url).origin;
     const sitemapUrl = `${baseUrl}/sitemap.xml`;
     const robotsUrl = `${baseUrl}/robots.txt`;
@@ -84,10 +106,16 @@ export async function scanFullSite(url: string) {
     ]);
 
     // 3. Deep Evaluate
+    console.log(`[Scanner Full] Extracting page analysis...`);
     const analysis = await page.evaluate(() => {
       const links = Array.from(document.querySelectorAll('a'))
         .map(a => a.href)
-        .filter(l => { try { return l.startsWith(window.location.origin); } catch(e){return false;} });
+        .filter(l => { 
+          try { 
+            const urlObj = new URL(l);
+            return urlObj.origin === window.location.origin; 
+          } catch(e) { return false; } 
+        });
       
       const allElements = Array.from(document.querySelectorAll('*')).slice(0, 400);
       const fonts = [...new Set(allElements.map(el => getComputedStyle(el).fontFamily))].slice(0, 5);
@@ -105,6 +133,7 @@ export async function scanFullSite(url: string) {
     });
 
     // 4. Screenshots
+    console.log(`[Scanner Full] Capturing screenshots...`);
     const desktopBuffer = await page.screenshot({ type: 'jpeg', quality: 60 });
     const desktopBase64 = desktopBuffer.toString('base64');
 
@@ -112,6 +141,9 @@ export async function scanFullSite(url: string) {
     await page.waitForTimeout(1000);
     const mobileBuffer = await page.screenshot({ type: 'jpeg', quality: 60 });
     const mobileBase64 = mobileBuffer.toString('base64');
+
+    console.log(`[Scanner Full] Scan complete for ${url}`);
+    await browser.close();
 
     return {
       ...analysis,
@@ -123,11 +155,9 @@ export async function scanFullSite(url: string) {
       screenshot_url: desktopBase64,
       mobile_screenshot: mobileBase64
     };
-  } catch (error) {
-    console.error("[Scanner Full] Error:", error);
+  } catch (error: any) {
+    console.error("[Scanner Full] Unexpected Error:", error.message);
     return null;
-  } finally {
-    if (browser) await browser.close();
   }
 }
 
