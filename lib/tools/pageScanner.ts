@@ -8,22 +8,35 @@
  * But: Récupérer titre, secteur, et TTFB pour filtrage radical.
  */
 export async function scanQuick(url: string) {
+  console.log(`[Scanner Quick] Scanning: ${url}`);
+  
   // Build-time guard: Only block during the actual compilation phase
   if (process.env.NEXT_PHASE === 'phase-production-build') {
     console.log('[Scanner Guard] Skipping Playwright during build phase.');
     return null;
   }
 
-  const { chromium } = await import("playwright");
-  let browser;
   try {
-    browser = await chromium.launch({ headless: true });
-    const page = await browser.newPage();
-    
-    const startTime = Date.now();
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 10000 });
-    const ttfb = Date.now() - startTime;
+    const { chromium } = await import("playwright");
+    let browser;
+    try {
+      browser = await chromium.launch({ headless: true });
+    } catch (launchError: any) {
+      console.error("[Scanner Quick] Browser launch error:", launchError.message);
+      return null;
+    }
 
+    const page = await browser.newPage();
+    const startTime = Date.now();
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 10000 });
+    } catch (gotoError: any) {
+      console.warn(`[Scanner Quick] Timeout for ${url}`);
+      await browser.close();
+      return null;
+    }
+
+    const ttfb = Date.now() - startTime;
     const data = await page.evaluate(() => {
       return {
         title: document.title,
@@ -33,12 +46,11 @@ export async function scanQuick(url: string) {
       };
     });
 
+    await browser.close();
     return { ...data, ttfb };
-  } catch (e) {
-    console.error("[Scanner Quick] Error:", e);
+  } catch (e: any) {
+    console.error("[Scanner Quick] Unexpected Error:", e.message);
     return null;
-  } finally {
-    if (browser) await browser.close();
   }
 }
 
