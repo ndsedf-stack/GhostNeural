@@ -1,0 +1,320 @@
+code source lmanuellement
+CHECKLIST COMPLÈTE : Ce que TU dois faire manuellement
+🎯 PHASE 1 : CRÉER LES COMPTES EXTERNES (30-45 min)
+✅ 1. Créer un compte Supabase
+📍 URL : https://supabase.com
+Étapes :
+✅ S'inscrire (gratuit)
+✅ Créer un nouveau projet
+Nom : ghostagency
+Région : choisir la plus proche (ex: Europe West)
+Mot de passe DB : générer un mot de passe fort (le sauvegarder)
+✅ Attendre 2-3 minutes que le projet soit créé
+✅ Aller dans Settings → API
+✅ Copier ces 3 valeurs :
+Project URL → ce sera NEXT_PUBLIC_SUPABASE_URL
+anon public key → ce sera NEXT_PUBLIC_SUPABASE_ANON_KEY
+service_role key (cliquer sur "Reveal") → ce sera SUPABASE_SERVICE_ROLE_KEY
+✅ Aller dans SQL Editor
+✅ Copier TOUT le contenu de supabase/migrations/20240101000000_initial_schema.sql
+✅ Coller dans l'éditeur SQL
+✅ Cliquer sur Run
+✅ Vérifier que les tables sont créées dans Table Editor (tu dois voir leads, opt_outs, email_logs)
+✅ 2. Créer une clé API Gemini
+📍 URL : https://aistudio.google.com/app/apikey
+Étapes :
+✅ Se connecter avec ton compte Google
+✅ Cliquer sur Create API Key
+✅ Sélectionner Create API key in new project (ou choisir un projet existant)
+✅ Copier la clé (format : AIzaSy...) → ce sera GEMINI_API_KEY
+✅ Important : Sauvegarder cette clé dans un endroit sûr (tu ne pourras plus la voir)
+✅ 3. Créer un compte Lemlist
+📍 URL : https://lemlist.com
+Étapes :
+✅ S'inscrire (essai gratuit 14 jours, puis ~$59/mois)
+✅ Créer une nouvelle campagne :
+Nom : GhostAgency Outreach
+Type : Email
+✅ Dans la campagne, aller dans Settings → Custom Variables
+✅ Créer ces variables custom :
+emailSubject
+emailBody
+secteur
+ville
+✅ Dans le modèle d'email, utiliser :
+Objet : {{emailSubject}}
+Corps : {{emailBody}}
+---
+Cordialement,
+[Ton nom]
+[Ta signature]
+✅ Aller dans Settings → API
+✅ Copier l'API Key → ce sera LEMLIST_API_KEY
+✅ Copier l'ID de la campagne (dans l'URL ou les settings) → ce sera LEMLIST_CAMPAIGN_ID
+✅ 4. (Optionnel) Créer un compte Outscraper
+📍 URL : https://outscraper.com
+Étapes :
+✅ S'inscrire (essai gratuit, puis ~$30/mois)
+✅ Aller dans Profile → API
+✅ Copier l'API Key → ce sera OUTSCRAPER_API_KEY
+Note : Si tu ne fais pas ça maintenant, le système utilisera des données de test. Tu pourras ajouter Outscraper plus tard.
+✅ 5. Créer un compte GitHub
+📍 URL : https://github.com
+Étapes :
+✅ S'inscrire (gratuit)
+✅ Créer un nouveau repository :
+Nom : ghostagency
+Visibilité : Private (important !)
+Ne PAS initialiser avec README/gitignore
+✅ Copier l'URL du repo (ex : https://github.com/ton-username/ghostagency.git)
+✅ 6. Créer un compte Vercel
+📍 URL : https://vercel.com
+Étapes :
+✅ S'inscrire avec ton compte GitHub (gratuit)
+✅ Autoriser Vercel à accéder à tes repos GitHub
+✅ Ne rien déployer pour l'instant (on le fera plus tard)
+💻 PHASE 2 : SETUP LOCAL (15-20 min)
+✅ 7. Créer le projet dans VS Code
+Étapes :
+✅ Ouvrir VS Code
+✅ Créer un nouveau dossier : ghostagency
+✅ Ouvrir ce dossier dans VS Code (File → Open Folder)
+✅ Ouvrir le terminal intégré (Terminal → New Terminal)
+✅ 8. Copier TOUS les fichiers
+Méthode avec Gemini dans VS Code :
+✅ Demander à Gemini :
+Crée toute la structure de GhostAgency.ai avec tous les fichiers
+que tu m'as donnés dans notre conversation précédente.
+Utilise :
+- Next.js 14 (App Router)
+- Supabase
+- Gemini API
+- TypeScript
+✅ Vérifier que tous les fichiers sont créés :
+ghostagency/
+├── .env.example
+├── .gitignore
+├── package.json
+├── tsconfig.json
+├── next.config.js
+├── tailwind.config.js
+├── postcss.config.js
+├── vercel.json
+├── DEPLOYMENT.md
+├── supabase/migrations/
+├── lib/
+├── types/
+├── app/
+└── components/
+OU Méthode manuelle :
+✅ Copier chaque fichier que je t'ai donné un par un
+✅ Créer la structure de dossiers exacte
+✅ Coller le contenu de chaque fichier
+✅ 9. Créer le fichier .env.local
+Étapes :
+✅ Dans VS Code, créer un fichier .env.local à la racine
+✅ Copier le contenu de .env.example
+✅ Remplir avec TES vraies valeurs :
+bash
+# Supabase (valeurs de l'étape 1)
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
+# Gemini (valeur de l'étape 2)
+GEMINI_API_KEY=AIzaSy...
+# Lemlist (valeurs de l'étape 3)
+LEMLIST_API_KEY=lem_...
+LEMLIST_CAMPAIGN_ID=cam_...
+# Cron Secret (générer un mot de passe aléatoire)
+CRON_SECRET=mon_secret_super_complexe_123456
+# Outscraper (optionnel, valeur de l'étape 4)
+OUTSCRAPER_API_KEY=YXBp...
+# Base URL (pour l'instant en local)
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+✅ Important : Sauvegarder le fichier
+✅ 10. Installer les dépendances
+Dans le terminal de VS Code :
+bash
+npm install
+⏱️ Temps : 2-3 minutes
+✅ Vérifier qu'il n'y a pas d'erreurs
+✅ 11. Tester en local
+Dans le terminal :
+bash
+npm run dev
+✅ Attendre que ça compile (15-30 secondes)
+✅ Ouvrir ton navigateur sur : http://localhost:3000
+✅ Tu devrais voir la War Room (même vide)
+✅ 12. Tester un agent
+Dans un autre terminal :
+bash
+curl -X POST http://localhost:3000/api/audit \
+-H "Content-Type: application/json" \
+-d '{"site_web":"https://google.com","secteur":"restaurant","ville":"Lyon"}'
+✅ Tu devrais recevoir un JSON avec un audit
+⚠️ Si erreur : vérifier que GEMINI_API_KEY est bien dans .env.local
+🚀 PHASE 3 : DÉPLOIEMENT (10-15 min)
+✅ 13. Initialiser Git
+Dans le terminal :
+bash
+git init
+git add .
+git commit -m "Initial commit - GhostAgency.ai"
+✅ 14. Push sur GitHub
+Dans le terminal (remplacer ton-username par ton vrai username GitHub) :
+bash
+git remote add origin https://github.com/ton-username/ghostagency.git
+git branch -M main
+git push -u origin main
+```
+✅ Vérifier sur GitHub que tous les fichiers sont bien là
+---
+### ✅ **15. Déployer sur Vercel**
+**Étapes** :
+1. ✅ Aller sur https://vercel.com
+2. ✅ Cliquer sur **Add New** → **Project**
+3. ✅ Sélectionner ton repo `ghostagency`
+4. ✅ Cliquer sur **Import**
+5. ✅ Dans **Environment Variables**, ajouter TOUTES les variables (cliquer sur "Add another" entre chaque) :
+```
+NEXT_PUBLIC_SUPABASE_URL = https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY = eyJhbGci...
+SUPABASE_SERVICE_ROLE_KEY = eyJhbGci...
+GEMINI_API_KEY = AIzaSy...
+LEMLIST_API_KEY = lem_...
+LEMLIST_CAMPAIGN_ID = cam_...
+CRON_SECRET = mon_secret_super_complexe_123456
+OUTSCRAPER_API_KEY = YXBp... (optionnel)
+NEXT_PUBLIC_BASE_URL = https://ton-app.vercel.app (tu le sauras après le 1er déploiement)
+✅ Cliquer sur Deploy
+✅ Attendre 2-3 minutes
+✅ Cliquer sur l'URL générée (ex: https://ghostagency-abc123.vercel.app)
+✅ Tu dois voir la War Room en ligne ! 🎉
+✅ 16. Mettre à jour NEXT_PUBLIC_BASE_URL
+Étapes :
+✅ Copier l'URL de ton app Vercel (ex: https://ghostagency-abc123.vercel.app)
+✅ Dans Vercel, aller dans Settings → Environment Variables
+✅ Modifier NEXT_PUBLIC_BASE_URL avec cette URL
+✅ Redéployer (aller dans Deployments → Redeploy)
+✅ 17. Configurer le Cron Job
+Étapes :
+✅ Dans Vercel, aller dans Settings → Cron Jobs
+✅ Cliquer sur Add Cron Job
+✅ Remplir :
+Path : /api/cron/send-pending-emails
+Schedule : 0 */2 * * * (toutes les 2 heures)
+✅ Cliquer sur Save
+🧪 PHASE 4 : TESTS (15-20 min)
+✅ 18. Tester l'orchestrateur en production
+Dans le terminal (remplacer l'URL par la tienne) :
+bash
+curl -X POST https://ton-app.vercel.app/api/orchestrator \
+-H "Content-Type: application/json" \
+-d '{"ville":"Lyon","secteur":"restaurant","max_results":3}'
+✅ Attendre 30-60 secondes
+✅ Tu devrais recevoir un JSON avec les résultats
+✅ 19. Vérifier dans Supabase
+Étapes :
+✅ Aller sur https://supabase.com
+✅ Ouvrir ton projet
+✅ Aller dans Table Editor → leads
+✅ Tu devrais voir les 3 leads créés avec leurs emails générés
+✅ 20. Vérifier dans la War Room
+Étapes :
+✅ Ouvrir https://ton-app.vercel.app
+✅ Cliquer sur l'onglet 📧 En attente
+✅ Tu devrais voir les 3 leads
+✅ Cliquer sur Voir l'email pour lire le contenu
+✅ NE PAS CLIQUER SUR ENVOYER POUR L'INSTANT (warm-up pas fait)
+🔥 PHASE 5 : WARM-UP LEMLIST (2-4 semaines)
+✅ 21. Configurer le domaine d'envoi
+Étapes :
+✅ Acheter un nom de domaine dédié (ex: ghostagency-mail.com) sur Namecheap/OVH (~10€/an)
+✅ Dans Lemlist, aller dans Settings → Sending Domains
+✅ Ajouter ton domaine
+✅ Suivre les instructions pour configurer les enregistrements DNS :
+SPF
+DKIM
+DMARC
+✅ Attendre 24-48h pour la propagation DNS
+✅ Vérifier sur https://mxtoolbox.com que tout est OK
+✅ 22. Démarrer le warm-up progressif
+Planning strict :
+SemaineEmails/jourActionSemaine 15 maxEnvoyer manuellement 5 emails/jour via la War RoomSemaine 210 maxAugmenter à 10 emails/jourSemaine 320 maxAugmenter à 20 emails/jourSemaine 430 maxAugmenter à 30 emails/jourSemaine 5+50 maxActiver le cron automatique
+Important :
+✅ Ne JAMAIS dépasser ces limites
+✅ Surveiller le bounce rate (doit rester < 5%)
+✅ Surveiller le spam rate (doit rester < 0.1%)
+✅ 23. Envoyer les 5 premiers emails (Semaine 1)
+Étapes :
+✅ Ouvrir la War Room
+✅ Aller dans 📧 En attente
+✅ Choisir 5 leads avec les meilleurs scores
+✅ Pour chacun :
+Cliquer sur Voir l'email
+Lire attentivement
+Si OK, cliquer sur Envoyer
+✅ Attendre 24h avant d'en envoyer 5 autres
+📊 PHASE 6 : MONITORING & OPTIMISATION (en continu)
+✅ 24. Surveiller les métriques Lemlist
+Chaque jour :
+✅ Aller sur Lemlist
+✅ Vérifier :
+Taux d'ouverture (objectif : > 30%)
+Taux de réponse (objectif : > 5%)
+Bounce rate (objectif : < 5%)
+Spam complaints (objectif : 0)
+✅ 25. Ajuster les prompts si besoin
+Si les emails ne convertissent pas :
+✅ Ouvrir lib/prompts/copywriter.ts
+✅ Modifier le prompt pour être plus/moins agressif
+✅ Commit + push sur GitHub
+✅ Vercel redéploiera automatiquement
+✅ 26. Gérer les opt-outs
+Quand quelqu'un demande à être retiré :
+✅ Aller sur Supabase
+✅ Table Editor → opt_outs
+✅ Insert row :
+email : l'email de la personne
+reason : "Demande par email"
+source : manual
+✅ Save
+📋 RÉCAPITULATIF : TEMPS TOTAL
+PhaseDuréeCumulPhase 1 : Créer les comptes30-45 min45 minPhase 2 : Setup local15-20 min1h05Phase 3 : Déploiement10-15 min1h20Phase 4 : Tests15-20 min1h40Phase 5 : Warm-up (début)30 min2h10
+Temps total avant les premiers emails : ~2 heures
+Temps total avant le full auto : 4-5 semaines (warm-up)
+✅ CHECKLIST FINALE
+Avant de te lancer, vérifie que tu as fait TOUT ça :
+Comptes créés
+Supabase créé + migrations exécutées
+Gemini API key obtenue
+Lemlist créé + campagne configurée
+GitHub créé + repo créé
+Vercel créé
+Code
+Tous les fichiers copiés dans VS Code
+.env.local créé et rempli avec TES vraies valeurs
+npm install exécuté sans erreur
+npm run dev fonctionne en local
+Déploiement
+Code pushé sur GitHub
+Variables d'env ajoutées dans Vercel
+App déployée sur Vercel
+Cron job configuré
+URL de production testée
+Tests
+Orchestrateur testé (3 leads créés)
+Leads visibles dans Supabase
+Leads visibles dans la War Room
+Emails générés lisibles et cohérents
+Warm-up
+Domaine d'envoi acheté (optionnel pour test)
+DNS configuré (SPF/DKIM/DMARC)
+Planning de warm-up compris
+5 premiers emails envoyés (Semaine 1)
+🎯 TU ES PRÊT SI :
+✅ Tu peux ouvrir https://ton-app.vercel.app et voir la War Room
+✅ Tu peux lancer un pipeline qui génère des emails
+✅ Tu peux envoyer un email via Lemlist
+✅ Tu comprends qu'il faut warm-up progressivement
+Félicitations, GhostAgency.ai est opérationnel ! 🎉

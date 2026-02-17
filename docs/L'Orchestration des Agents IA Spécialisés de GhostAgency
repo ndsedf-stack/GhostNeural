@@ -1,0 +1,48 @@
+Pourquoi Resend est un excellent choix (vs Lemlist)
+
+Resend est beaucoup plus moderne et incroyablement moins cher pour un développeur.
+
+Coût : Gratuit jusqu'à 3 000 emails/mois. C'est imbattable pour démarrer.
+
+Technique : C'est une API pure. Tu as un contrôle total sur le design de l'email (via React Email).
+
+Le bémol : Resend n'a pas de "Warm-up" intégré ni de gestionnaire de séquences (relances auto). Tu devras coder la logique de relance dans ton orchestrateur.
+
+Verdict : OUI, on bascule sur Resend. C'est le meilleur choix "Dev-First".
+
+🤖 2. L'Orchestrateur Multi-Agents
+
+Pour que l'agence soit efficace, chaque agent doit avoir son "cerveau" adapté à sa tâche (coût/vitesse/intelligence).
+
+Agent	Tâche	Modèle recommandé	Pourquoi ?
+L'Éclaireur	Analyse le site web (OCR/Text)	Gemini 1.5 Flash	Gratuit, fenêtre de contexte géante (30k+ mots).
+Le Stratège	Définit l'angle d'approche	Claude 3.5 Sonnet	Le meilleur pour la logique et la psychologie de vente.
+Le Plume	Rédige l'email personnalisé	Claude 3 Haiku	Ultra-rapide, très peu cher, style moins "robotique" que GPT.
+Le Critique	Vérifie les fautes et le ton	GPT-4o mini	Très rigoureux sur la forme, coût dérisoire.
+💰 3. Analyse des Coûts API (Estimation pour 1 000 leads)
+
+Service	Coût estimé	Note
+Supabase	0 €	Plan gratuit largement suffisant.
+Resend	0 €	Dans la limite des 3 000/mois.
+Gemini Flash	0 €	Via Google AI Studio.
+Claude Haiku	~1.50 €	Pour 1 000 rédactions (via Anthropic Console).
+GPT-4o mini	~0.50 €	Pour 1 000 audits rapides.
+TOTAL	~2.00 €	Pour lancer une machine de guerre.
+🛠 Ce qu'on va modifier dans ton Code Source
+
+Pour que ton orchestrateur fonctionne avec cette structure, on va devoir créer un dossier lib/agents/ avec des fichiers séparés.
+
+Souhaites-tu que je te génère le code de l'Orchestrateur Central qui appelle ces différents agents l'un après l'autre ? (Note : Pour Anthropic et OpenAI, tu devras quand même mettre 5€ de crédits sur chaque plateforme pour activer les clés, mais ces 10€ te dureront des mois).
+
+Voici la structure du .env.local mis à jour que nous allons utiliser :
+
+Bash
+# Infrastructure
+NEXT_PUBLIC_SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+RESEND_API_KEY=re_123456789
+
+# Intelligence (Multi-Agents)
+GEMINI_API_KEY=...       # Pour l'analyse de site (Éclaireur)
+ANTHROPIC_API_KEY=...    # Pour la rédaction (Haiku) et stratégie (Sonnet)
+OPENAI_API_KEY=...       # Pour la validation finale (GPT-4o mini)

@@ -1,0 +1,624 @@
+{
+  "name": "GhostNeural — 🧠 BRAIN Orchestrateur Central v3",
+  "nodes": [
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ghostneural-brain",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "trigger",
+      "name": "🚀 Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 500]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst required = ['nom','site_web','secteur','ville'];\nfor (const f of required) if (!body[f]) throw new Error(`Champ manquant: ${f}`);\nlet url = body.site_web.trim();\nif (!url.startsWith('http')) url = 'https://' + url;\nurl = url.replace(/\\/$/,'');\nreturn [{ json: {\n  nom: body.nom.trim(),\n  site_web: url,\n  secteur: body.secteur.toLowerCase().trim(),\n  ville: body.ville.trim(),\n  email: body.email || null,\n  pipeline_id: `gn_${Date.now()}_${Math.random().toString(36).substr(2,6)}`,\n  started_at: new Date().toISOString()\n}}];"
+      },
+      "id": "init",
+      "name": "✅ Init",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 500]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXT_APP_URL }}/api/agents/scan-quick",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [{ "name": "url", "value": "={{ $json.site_web }}" }]
+        },
+        "options": { "timeout": 15000 }
+      },
+      "id": "scan-quick",
+      "name": "⚡ scanQuick",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [640, 500]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ════════════════════════════════════════════════════════\n// 🧠 BRAIN — DÉCISION 1 : PRÉ-ANALYSE & PLAN D'ACTION\n// Le Brain reçoit les données brutes du scanQuick.\n// Il raisonne, produit un plan, décide GO/REJECT.\n// C'est du code déterministe MAIS il simule le raisonnement\n// du Brain pour préparer le prompt LLM qui suit.\n// ════════════════════════════════════════════════════════\nconst prospect = $('✅ Init').first().json;\nconst scan = $input.first().json;\n\n// ── REJETS DURS (pas besoin de LLM) ──────────────────────\nif (!scan.status || scan.status >= 400) {\n  return [{ json: { brain_go: false, brain_decision: 'REJECT_HARD', brain_reason: `Site inaccessible HTTP ${scan.status}`, prospect, scan } }];\n}\nif (scan.ttfb > 9000) {\n  return [{ json: { brain_go: false, brain_decision: 'REJECT_HARD', brain_reason: `TTFB ${scan.ttfb}ms — serveur mort`, prospect, scan } }];\n}\nconst BLACKLIST = ['facebook.com','amazon.','google.com','apple.com','microsoft.com','booking.com','tripadvisor'];\nif (BLACKLIST.some(b => prospect.site_web.includes(b))) {\n  return [{ json: { brain_go: false, brain_decision: 'REJECT_HARD', brain_reason: 'Grande marque blacklistée', prospect, scan } }];\n}\n\n// ── CONSTRUCTION DU CONTEXTE POUR LE BRAIN LLM ───────────\nconst brain_context = {\n  prospect: {\n    nom: prospect.nom,\n    site: prospect.site_web,\n    secteur: prospect.secteur,\n    ville: prospect.ville\n  },\n  signals: {\n    ttfb_ms: scan.ttfb || 'inconnu',\n    http_status: scan.status,\n    title: scan.title || 'ABSENT',\n    title_length: (scan.title || '').length,\n    h1: scan.h1 || 'ABSENT',\n    meta_desc: scan.meta_desc ? `présente (${scan.meta_desc.length} chars)` : 'ABSENTE',\n    ville_dans_title: (scan.title||'').toLowerCase().includes(prospect.ville.toLowerCase()),\n    ville_dans_h1: (scan.h1||'').toLowerCase().includes(prospect.ville.toLowerCase()),\n    secteur_visible: (scan.title||'').toLowerCase().includes(prospect.secteur) || (scan.h1||'').toLowerCase().includes(prospect.secteur)\n  }\n};\n\nreturn [{ json: {\n  brain_go: true,\n  brain_decision: 'CONTINUE_TO_LLM',\n  brain_context: JSON.stringify(brain_context),\n  prospect,\n  scan\n}}];"
+      },
+      "id": "brain-precheck",
+      "name": "🧠 Brain — Pré-analyse (code)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 500]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{
+            "leftValue": "={{ $json.brain_go }}",
+            "rightValue": true,
+            "operator": { "type": "boolean", "operation": "equals" }
+          }]
+        }
+      },
+      "id": "guard-precheck",
+      "name": "🛡 Guard Pré-analyse",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1080, 500]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 800,\n  \"system\": \"Tu es le Brain de GhostNeural, un orchestrateur intelligent de prospection web. Tu analyses des prospects PME/TPE pour vendre des refontes de site web premium. Tu devez:\\n1. Evaluer si ce prospect vaut qu'on investisse dans une analyse complète (Scan Full + Lighthouse = ~15-25s de compute)\\n2. Si OUI : définir le TOP 2 des angles d'approche les plus prometteurs pour CE prospect spécifique\\n3. Si OUI : identifier le problème CRITIQUE principal à mentionner dans l'email\\n4. Si OUI : choisir le ton optimal (directeur_sympathique / consultant_expert / pair_bienveillant)\\n\\nRéponds UNIQUEMENT en JSON valide, sans markdown, sans backticks, format exact :\\n{\\n  \\\"decision\\\": \\\"GO\\\" ou \\\"REJECT\\\",\\n  \\\"confidence\\\": 0-100,\\n  \\\"rejection_reason\\\": \\\"null si GO\\\",\\n  \\\"top_angles\\\": [\\\"angle1\\\", \\\"angle2\\\"],\\n  \\\"probleme_critique\\\": \\\"Le problème principal identifié\\\",\\n  \\\"ton_optimal\\\": \\\"directeur_sympathique\\\",\\n  \\\"brain_reasoning\\\": \\\"Ton raisonnement en 2-3 phrases\\\",\\n  \\\"priorite\\\": \\\"haute|moyenne|basse\\\",\\n  \\\"agent_instructions\\\": {\\n    \\\"stratege\\\": \\\"instruction spécifique pour le Stratège\\\",\\n    \\\"architecte\\\": \\\"instruction spécifique pour l'Architecte\\\",\\n    \\\"copywriter\\\": \\\"instruction spécifique pour le Copywriter\\\"\\n  }\\n}\",\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"Analyse ce prospect et prends une décision GO/REJECT avec ton plan d'action.\\n\\nDONNÉES PROSPECT :\\n{{ $('🧠 Brain — Pré-analyse (code)').first().json.brain_context }}\\n\\nHistorique des meilleurs angles de conversion dans ce secteur ({{ $('✅ Init').first().json.secteur }}) : à déterminer selon ton expertise.\"\n  }]\n}"
+      },
+      "id": "brain-llm-1",
+      "name": "🧠 Brain LLM — Décision & Plan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 380]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\n// Extraire le texte de la réponse Anthropic\nconst content = raw.content?.[0]?.text || raw.text || '{}';\nlet parsed;\ntry {\n  parsed = JSON.parse(content);\n} catch(e) {\n  // Fallback si le JSON est mal formé\n  parsed = {\n    decision: 'GO',\n    confidence: 50,\n    rejection_reason: null,\n    top_angles: ['Performance & Conversion', 'SEO Local'],\n    probleme_critique: 'Site non optimisé pour la conversion',\n    ton_optimal: 'consultant_expert',\n    brain_reasoning: 'Parse error — fallback vers GO avec angles génériques',\n    priorite: 'moyenne',\n    agent_instructions: {\n      stratege: 'Focus sur la conversion et le ROI',\n      architecte: 'Structure moderne mobile-first',\n      copywriter: 'Ton professionnel et direct'\n    }\n  };\n}\nconst prospect = $('✅ Init').first().json;\nconst scan = $('🧠 Brain — Pré-analyse (code)').first().json.scan;\nreturn [{ json: {\n  brain_decision: parsed,\n  brain_go: parsed.decision === 'GO',\n  prospect,\n  scan\n}}];"
+      },
+      "id": "parse-brain-1",
+      "name": "📋 Parse Brain Décision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1520, 380]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{
+            "leftValue": "={{ $json.brain_go }}",
+            "rightValue": true,
+            "operator": { "type": "boolean", "operation": "equals" }
+          }]
+        }
+      },
+      "id": "guard-brain-1",
+      "name": "🛡 Guard Brain GO ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1740, 380]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXT_APP_URL }}/api/agents/scan-full",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "url", "value": "={{ $json.prospect.site_web }}" },
+            { "name": "secteur", "value": "={{ $json.prospect.secteur }}" }
+          ]
+        },
+        "options": { "timeout": 60000 }
+      },
+      "id": "scan-full",
+      "name": "🕷️ Scan Full",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1960, 260]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXT_APP_URL }}/api/agents/lighthouse",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "url", "value": "={{ $('🛡 Guard Brain GO ?').first().json.prospect.site_web }}" }
+          ]
+        },
+        "options": { "timeout": 60000 }
+      },
+      "id": "lighthouse",
+      "name": "🏎️ Lighthouse",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1960, 460]
+    },
+
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge-scan",
+      "name": "🔗 Merge Scan + LH",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [2180, 360]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXT_APP_URL }}/api/agents/audit",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "scannedData", "value": "={{ JSON.stringify($json[0]) }}" },
+            { "name": "lighthouse", "value": "={{ JSON.stringify($json[1]) }}" },
+            { "name": "secteur", "value": "={{ $('✅ Init').first().json.secteur }}" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "id": "audit",
+      "name": "🔬 Audit Ultra",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2400, 360]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 1200,\n  \"system\": \"Tu es le Brain de GhostNeural. Tu viens de recevoir l'audit complet d'un prospect. Tu dois maintenant prendre une DÉCISION FINALE et donner des instructions PRÉCISES et PERSONNALISÉES à chaque agent.\\n\\nTon rôle :\\n- Analyser les vrais chiffres de l'audit (Lighthouse score, problèmes techniques réels)\\n- Décider si ce prospect est rentable à contacter (score audit >= 30 = toujours GO car problème = opportunité)\\n- Formuler des instructions ULTRA-SPÉCIFIQUES pour chaque agent basées sur les VRAIES données\\n- Identifier le montant CA PERDU estimé par mois (ça sera le hook de l'email)\\n\\nRéponds UNIQUEMENT en JSON valide :\\n{\\n  \\\"decision_finale\\\": \\\"GO\\\" ou \\\"ABORT\\\",\\n  \\\"abort_reason\\\": null,\\n  \\\"ca_perdu_estime\\\": \\\"ex: 2 400€/mois\\\",\\n  \\\"hook_principal\\\": \\\"La phrase d'accroche principale pour l'email\\\",\\n  \\\"brain_synthesis\\\": \\\"Synthèse en 3 phrases du diagnostic\\\",\\n  \\\"instructions_stratege\\\": \\\"Instructions précises pour le Stratège avec les vraies métriques\\\",\\n  \\\"instructions_architecte\\\": \\\"Instructions précises pour l'Architecte avec pages prioritaires\\\",\\n  \\\"instructions_copywriter\\\": \\\"Instructions précises pour le Copywriter : ton, hook, objection à anticiper\\\",\\n  \\\"score_opportunite\\\": 0-100,\\n  \\\"next_action\\\": \\\"email_immediat|nurturing|appel_direct\\\"\n}\",\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"DÉCISION 1 DU BRAIN :\\n{{ JSON.stringify($('📋 Parse Brain Décision').first().json.brain_decision) }}\\n\\nAUDIT COMPLET :\\n{{ JSON.stringify($('🔬 Audit Ultra').first().json) }}\\n\\nPROSPECT :\\n{{ JSON.stringify($('✅ Init').first().json) }}\\n\\nBasé sur ces données réelles, prends ta décision finale et instruis chaque agent.\"\n  }]\n}"
+      },
+      "id": "brain-llm-2",
+      "name": "🧠 Brain LLM — Décision Finale & Instructions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2620, 360]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst content = raw.content?.[0]?.text || raw.text || '{}';\nlet parsed;\ntry {\n  parsed = JSON.parse(content);\n} catch(e) {\n  parsed = {\n    decision_finale: 'GO',\n    ca_perdu_estime: 'Non calculé',\n    hook_principal: 'Votre site perd des clients chaque jour',\n    brain_synthesis: 'Site avec des problèmes de performance et de conversion',\n    instructions_stratege: 'Focus sur la perte de CA et le ROI de la refonte',\n    instructions_architecte: 'Prioriser home page, page contact, mobile',\n    instructions_copywriter: 'Ton direct, chiffres concrets, appel à 15 min',\n    score_opportunite: 60,\n    next_action: 'email_immediat'\n  };\n}\nreturn [{ json: {\n  brain_final: parsed,\n  brain_go_final: parsed.decision_finale === 'GO',\n  prospect: $('✅ Init').first().json,\n  audit: $('🔬 Audit Ultra').first().json,\n  brain_decision_1: $('📋 Parse Brain Décision').first().json.brain_decision\n}}];"
+      },
+      "id": "parse-brain-2",
+      "name": "📋 Parse Brain Final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2840, 360]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{
+            "leftValue": "={{ $json.brain_go_final }}",
+            "rightValue": true,
+            "operator": { "type": "boolean", "operation": "equals" }
+          }]
+        }
+      },
+      "id": "guard-brain-2",
+      "name": "🛡 Guard Brain Final",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [3060, 360]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXT_APP_URL }}/api/agents/stratege",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"auditData\": {{ JSON.stringify($json.audit) }},\n  \"secteur\": \"{{ $json.prospect.secteur }}\",\n  \"ville\": \"{{ $json.prospect.ville }}\",\n  \"qualifData\": {},\n  \"brain_instructions\": \"{{ $json.brain_final.instructions_stratege }}\",\n  \"brain_top_angles\": {{ JSON.stringify($json.brain_decision_1.top_angles) }},\n  \"brain_ton\": \"{{ $json.brain_decision_1.ton_optimal }}\",\n  \"brain_hook\": \"{{ $json.brain_final.hook_principal }}\"\n}",
+        "options": { "timeout": 20000 }
+      },
+      "id": "stratege",
+      "name": "🎯 Stratège",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3280, 240]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXT_APP_URL }}/api/agents/architecte",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"auditData\": {{ JSON.stringify($('📋 Parse Brain Final').first().json.audit) }},\n  \"secteur\": \"{{ $('📋 Parse Brain Final').first().json.prospect.secteur }}\",\n  \"ville\": \"{{ $('📋 Parse Brain Final').first().json.prospect.ville }}\",\n  \"brain_instructions\": \"{{ $('📋 Parse Brain Final').first().json.brain_final.instructions_architecte }}\"\n}",
+        "options": { "timeout": 20000 }
+      },
+      "id": "architecte",
+      "name": "🏗️ Architecte",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3280, 460]
+    },
+
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge-strat-archi",
+      "name": "🔗 Merge Strat + Archi",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [3500, 360]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXT_APP_URL }}/api/agents/copywriter",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"strategy\": {{ JSON.stringify($json[0]) }},\n  \"archiData\": {{ JSON.stringify($json[1]) }},\n  \"leadInfo\": {{ JSON.stringify($('✅ Init').first().json) }},\n  \"auditData\": {{ JSON.stringify($('📋 Parse Brain Final').first().json.audit) }},\n  \"brain_instructions\": \"{{ $('📋 Parse Brain Final').first().json.brain_final.instructions_copywriter }}\",\n  \"brain_hook\": \"{{ $('📋 Parse Brain Final').first().json.brain_final.hook_principal }}\",\n  \"brain_ca_perdu\": \"{{ $('📋 Parse Brain Final').first().json.brain_final.ca_perdu_estime }}\",\n  \"brain_ton\": \"{{ $('📋 Parse Brain Final').first().json.brain_decision_1.ton_optimal }}\"\n}",
+        "options": { "timeout": 25000 }
+      },
+      "id": "copywriter",
+      "name": "✍️ Copywriter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3720, 360]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 1000,\n  \"system\": \"Tu es le Brain de GhostNeural en mode CRITIQUE FINAL. Tu relis l'email généré et tu dois :\\n\\n1. Vérifier qu'il respecte TES instructions initiales\\n2. Détecter tout ce qui sonne 'template' ou 'robot'\\n3. Vérifier la présence du hook CA_PERDU\\n4. Vérifier le ton (pas trop commercial, pas trop timide)\\n5. Vérifier RGPD opt-out présent\\n6. Humaniser si nécessaire\\n7. Décider APPROVE ou REWRITE (si REWRITE, fournir la version corrigée)\\n\\nRéponds UNIQUEMENT en JSON valide :\\n{\\n  \\\"verdict\\\": \\\"APPROVE\\\" ou \\\"REWRITE\\\",\\n  \\\"qualite_score\\\": 0-100,\\n  \\\"envoyable\\\": true/false,\\n  \\\"raisons_rejet\\\": [],\\n  \\\"objet_final\\\": \\\"L'objet définitif\\\",\\n  \\\"corps_final\\\": \\\"Le corps définitif (corrigé si REWRITE)\\\",\\n  \\\"brain_note\\\": \\\"Commentaire du Brain sur la qualité\\\"\n}\",\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"EMAIL GÉNÉRÉ PAR LE COPYWRITER :\\n{{ JSON.stringify($('✍️ Copywriter').first().json) }}\\n\\nMES INSTRUCTIONS INITIALES POUR CET EMAIL :\\n- Hook : {{ $('📋 Parse Brain Final').first().json.brain_final.hook_principal }}\\n- CA perdu estimé : {{ $('📋 Parse Brain Final').first().json.brain_final.ca_perdu_estime }}\\n- Ton : {{ $('📋 Parse Brain Final').first().json.brain_decision_1.ton_optimal }}\\n- Instructions copywriter : {{ $('📋 Parse Brain Final').first().json.brain_final.instructions_copywriter }}\\n\\nEst-ce que cet email respecte mes instructions ? Score et verdict.\"\n  }]\n}"
+      },
+      "id": "brain-critique",
+      "name": "🧠 Brain LLM — Critique & Validation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3940, 360]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst content = raw.content?.[0]?.text || raw.text || '{}';\nlet parsed;\ntry {\n  parsed = JSON.parse(content);\n} catch(e) {\n  const copy = $('✍️ Copywriter').first().json;\n  parsed = {\n    verdict: 'APPROVE',\n    qualite_score: 65,\n    envoyable: true,\n    raisons_rejet: [],\n    objet_final: copy.objet || copy.variante_a?.objet || 'Analyse de votre site',\n    corps_final: copy.corps || copy.variante_a?.corps || '',\n    brain_note: 'Fallback parse error'\n  };\n}\n\n// Injection opt-out RGPD si absent\nif (parsed.corps_final && !parsed.corps_final.toLowerCase().includes('opt-out') && !parsed.corps_final.toLowerCase().includes('désabonner') && !parsed.corps_final.toLowerCase().includes('ne souhaitez plus')) {\n  parsed.corps_final += '\\n\\n---\\nSi vous ne souhaitez plus recevoir ce type d\\'analyses, répondez simplement \"Opt-out\".';\n}\n\nreturn [{ json: {\n  brain_critique: parsed,\n  email_ready: parsed.envoyable && parsed.qualite_score >= 60,\n  prospect: $('✅ Init').first().json,\n  audit: $('📋 Parse Brain Final').first().json.audit,\n  brain_decision_1: $('📋 Parse Brain Final').first().json.brain_decision_1,\n  brain_final: $('📋 Parse Brain Final').first().json.brain_final\n}}];"
+      },
+      "id": "parse-brain-critique",
+      "name": "📋 Parse Brain Critique",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4160, 360]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{
+            "leftValue": "={{ $json.email_ready }}",
+            "rightValue": true,
+            "operator": { "type": "boolean", "operation": "equals" }
+          }]
+        }
+      },
+      "id": "guard-email",
+      "name": "🛡 Guard Email Prêt ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [4380, 360]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nreturn [{ json: {\n  // Prospect\n  nom: d.prospect.nom,\n  site_web: d.prospect.site_web,\n  secteur: d.prospect.secteur,\n  ville: d.prospect.ville,\n  email: d.prospect.email,\n  // Scores\n  score_audit: d.audit?.score_global || 0,\n  score_confiance: (d.brain_critique.qualite_score || 0) / 100,\n  score_opportunite: d.brain_final?.score_opportunite || 0,\n  // Email final\n  email_objet: d.brain_critique.objet_final,\n  email_body: d.brain_critique.corps_final,\n  // Brain data\n  brain_reasoning: d.brain_decision_1?.brain_reasoning,\n  brain_synthesis: d.brain_final?.brain_synthesis,\n  brain_hook: d.brain_final?.hook_principal,\n  brain_ca_perdu: d.brain_final?.ca_perdu_estime,\n  brain_note: d.brain_critique?.brain_note,\n  brain_next_action: d.brain_final?.next_action,\n  // Agents data\n  audit_data: d.audit,\n  proposition_data: {\n    brain_plan: d.brain_final,\n    decision_initiale: d.brain_decision_1\n  },\n  priorite: d.brain_decision_1?.priorite || 'moyenne',\n  // Status\n  status: 'email_ready',\n  pipeline_completed_at: new Date().toISOString()\n}}];"
+      },
+      "id": "assembly",
+      "name": "📦 Assembly Final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4600, 240]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "save-supabase",
+      "name": "💾 Supabase — Save EMAIL_READY",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4820, 240]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{
+            "leftValue": "={{ $('📦 Assembly Final').first().json.priorite }}",
+            "rightValue": "haute",
+            "operator": { "type": "string", "operation": "equals" }
+          }]
+        }
+      },
+      "id": "check-prio",
+      "name": "⭐ Priorité haute ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [5040, 240]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.SLACK_BOT_TOKEN }}" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"channel\": \"#ghostneural-leads\",\n  \"text\": \"🔥 *Lead CHAUD — Brain Score {{ $('📦 Assembly Final').first().json.score_opportunite }}/100*\\n*{{ $('📦 Assembly Final').first().json.nom }}* ({{ $('📦 Assembly Final').first().json.secteur }} — {{ $('📦 Assembly Final').first().json.ville }})\\n💡 Brain: {{ $('📦 Assembly Final').first().json.brain_synthesis }}\\n💸 CA perdu estimé: {{ $('📦 Assembly Final').first().json.brain_ca_perdu }}\\n📧 Action: {{ $('📦 Assembly Final').first().json.brain_next_action }}\"\n}"
+      },
+      "id": "slack",
+      "name": "🔔 Slack Notif",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [5260, 160]
+    },
+
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, pipeline_id: $('✅ Init').first().json.pipeline_id, status: 'email_ready', score_audit: $('📦 Assembly Final').first().json.score_audit, score_opportunite: $('📦 Assembly Final').first().json.score_opportunite, brain_synthesis: $('📦 Assembly Final').first().json.brain_synthesis, brain_hook: $('📦 Assembly Final').first().json.brain_hook, ca_perdu: $('📦 Assembly Final').first().json.brain_ca_perdu, next_action: $('📦 Assembly Final').first().json.brain_next_action }) }}"
+      },
+      "id": "response-ok",
+      "name": "✅ Réponse Succès",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [5480, 240]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nreturn [{ json: {\n  nom: d.prospect?.nom || 'Inconnu',\n  site_web: d.prospect?.site_web || '',\n  secteur: d.prospect?.secteur || '',\n  ville: d.prospect?.ville || '',\n  status: 'quality_review',\n  rejection_reason: `Brain Critique: score ${d.brain_critique?.qualite_score}/100 — ${(d.brain_critique?.raisons_rejet||[]).join(', ')}`,\n  email_objet: d.brain_critique?.objet_final || '',\n  email_body: d.brain_critique?.corps_final || '',\n  brain_note: d.brain_critique?.brain_note || ''\n}}];"
+      },
+      "id": "prepare-review",
+      "name": "🔧 Révision Manuelle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4600, 480]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "save-review",
+      "name": "💾 Supabase — Save REVIEW",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4820, 480]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "nom", "value": "={{ $json.prospect?.nom || 'Inconnu' }}" },
+            { "name": "site_web", "value": "={{ $json.prospect?.site_web || '' }}" },
+            { "name": "secteur", "value": "={{ $json.prospect?.secteur || '' }}" },
+            { "name": "status", "value": "rejected" },
+            { "name": "rejection_reason", "value": "={{ $json.brain_reason || $json.brain_final?.abort_reason || 'Brain rejet' }}" }
+          ]
+        }
+      },
+      "id": "save-reject",
+      "name": "💾 Supabase — Save REJECTED",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1960, 640]
+    }
+
+  ],
+
+  "connections": {
+    "🚀 Trigger": {
+      "main": [[{ "node": "✅ Init", "type": "main", "index": 0 }]]
+    },
+    "✅ Init": {
+      "main": [[{ "node": "⚡ scanQuick", "type": "main", "index": 0 }]]
+    },
+    "⚡ scanQuick": {
+      "main": [[{ "node": "🧠 Brain — Pré-analyse (code)", "type": "main", "index": 0 }]]
+    },
+    "🧠 Brain — Pré-analyse (code)": {
+      "main": [[{ "node": "🛡 Guard Pré-analyse", "type": "main", "index": 0 }]]
+    },
+    "🛡 Guard Pré-analyse": {
+      "main": [
+        [{ "node": "🧠 Brain LLM — Décision & Plan", "type": "main", "index": 0 }],
+        [{ "node": "💾 Supabase — Save REJECTED", "type": "main", "index": 0 }]
+      ]
+    },
+    "🧠 Brain LLM — Décision & Plan": {
+      "main": [[{ "node": "📋 Parse Brain Décision", "type": "main", "index": 0 }]]
+    },
+    "📋 Parse Brain Décision": {
+      "main": [[{ "node": "🛡 Guard Brain GO ?", "type": "main", "index": 0 }]]
+    },
+    "🛡 Guard Brain GO ?": {
+      "main": [
+        [
+          { "node": "🕷️ Scan Full", "type": "main", "index": 0 },
+          { "node": "🏎️ Lighthouse", "type": "main", "index": 0 }
+        ],
+        [{ "node": "💾 Supabase — Save REJECTED", "type": "main", "index": 0 }]
+      ]
+    },
+    "🕷️ Scan Full": {
+      "main": [[{ "node": "🔗 Merge Scan + LH", "type": "main", "index": 0 }]]
+    },
+    "🏎️ Lighthouse": {
+      "main": [[{ "node": "🔗 Merge Scan + LH", "type": "main", "index": 1 }]]
+    },
+    "🔗 Merge Scan + LH": {
+      "main": [[{ "node": "🔬 Audit Ultra", "type": "main", "index": 0 }]]
+    },
+    "🔬 Audit Ultra": {
+      "main": [[{ "node": "🧠 Brain LLM — Décision Finale & Instructions", "type": "main", "index": 0 }]]
+    },
+    "🧠 Brain LLM — Décision Finale & Instructions": {
+      "main": [[{ "node": "📋 Parse Brain Final", "type": "main", "index": 0 }]]
+    },
+    "📋 Parse Brain Final": {
+      "main": [[{ "node": "🛡 Guard Brain Final", "type": "main", "index": 0 }]]
+    },
+    "🛡 Guard Brain Final": {
+      "main": [
+        [
+          { "node": "🎯 Stratège", "type": "main", "index": 0 },
+          { "node": "🏗️ Architecte", "type": "main", "index": 0 }
+        ],
+        [{ "node": "💾 Supabase — Save REJECTED", "type": "main", "index": 0 }]
+      ]
+    },
+    "🎯 Stratège": {
+      "main": [[{ "node": "🔗 Merge Strat + Archi", "type": "main", "index": 0 }]]
+    },
+    "🏗️ Architecte": {
+      "main": [[{ "node": "🔗 Merge Strat + Archi", "type": "main", "index": 1 }]]
+    },
+    "🔗 Merge Strat + Archi": {
+      "main": [[{ "node": "✍️ Copywriter", "type": "main", "index": 0 }]]
+    },
+    "✍️ Copywriter": {
+      "main": [[{ "node": "🧠 Brain LLM — Critique & Validation", "type": "main", "index": 0 }]]
+    },
+    "🧠 Brain LLM — Critique & Validation": {
+      "main": [[{ "node": "📋 Parse Brain Critique", "type": "main", "index": 0 }]]
+    },
+    "📋 Parse Brain Critique": {
+      "main": [[{ "node": "🛡 Guard Email Prêt ?", "type": "main", "index": 0 }]]
+    },
+    "🛡 Guard Email Prêt ?": {
+      "main": [
+        [{ "node": "📦 Assembly Final", "type": "main", "index": 0 }],
+        [{ "node": "🔧 Révision Manuelle", "type": "main", "index": 0 }]
+      ]
+    },
+    "📦 Assembly Final": {
+      "main": [[{ "node": "💾 Supabase — Save EMAIL_READY", "type": "main", "index": 0 }]]
+    },
+    "💾 Supabase — Save EMAIL_READY": {
+      "main": [[{ "node": "⭐ Priorité haute ?", "type": "main", "index": 0 }]]
+    },
+    "⭐ Priorité haute ?": {
+      "main": [
+        [{ "node": "🔔 Slack Notif", "type": "main", "index": 0 }],
+        [{ "node": "✅ Réponse Succès", "type": "main", "index": 0 }]
+      ]
+    },
+    "🔔 Slack Notif": {
+      "main": [[{ "node": "✅ Réponse Succès", "type": "main", "index": 0 }]]
+    },
+    "🔧 Révision Manuelle": {
+      "main": [[{ "node": "💾 Supabase — Save REVIEW", "type": "main", "index": 0 }]]
+    }
+  },
+
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "ghostneural-error-handler"
+  },
+  "tags": ["ghostneural", "brain", "orchestrateur", "v3"],
+  "meta": { "instanceId": "ghostneural-brain-v3" }
+}
