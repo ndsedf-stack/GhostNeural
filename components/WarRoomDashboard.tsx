@@ -531,7 +531,7 @@ export default function WarRoomDashboard({ initialLeads }: { initialLeads: Lead[
                             <div className="h-3 w-3 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]"></div>
                             <div className="h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                           </div>
-                          <span className="text-[12px] font-black text-slate-500 uppercase tracking-[0.8em] italic">GHOST WRITER V1.0 - SHOCK DELIVERY</span>
+                          <span className="text-[12px] font-black text-slate-500 uppercase tracking-[0.8em] italic">GHOST WRITER v4 — BRAIN AUTONOME</span>
                           <div className="w-10"></div>
                         </div>
                         <div className="p-16 space-y-12">
@@ -579,7 +579,7 @@ export default function WarRoomDashboard({ initialLeads }: { initialLeads: Lead[
                              LIVE MONITORING
                            </span>
                         </div>
-                        <h3 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.6em] mb-12 border-b border-slate-800/50 pb-6 italic">GHOST-NET OS v1.0 ULTIME</h3>
+                        <h3 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.6em] mb-12 border-b border-slate-800/50 pb-6 italic">GHOST-NET BRAIN OS v4 — RETRY LOOPS</h3>
                         <div className="space-y-6 text-[12px]">
                           {[
                             { tag: 'INIT', msg: `Mission démarrée pour ${selectedLead.nom}`, color: 'text-blue-500' },
