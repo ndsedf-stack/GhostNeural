@@ -52,6 +52,12 @@ export async function callLLMWithRetry<T>(
   fn: () => Promise<string>,
   retries: number = 2
 ): Promise<T | null> {
+  // Build-time guard to prevent crashes during Vercel static analysis
+  if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
+    console.log('[LLM Guard] Skipping real call during build phase.');
+    return null;
+  }
+
   let lastRaw = "";
   for (let i = 0; i < retries + 1; i++) {
     try {

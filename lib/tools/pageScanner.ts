@@ -8,6 +8,12 @@
  * But: Récupérer titre, secteur, et TTFB pour filtrage radical.
  */
 export async function scanQuick(url: string) {
+  // Build-time guard
+  if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
+    console.log('[Scanner Guard] Skipping Playwright during build phase.');
+    return null;
+  }
+
   const { chromium } = await import("playwright");
   let browser;
   try {
