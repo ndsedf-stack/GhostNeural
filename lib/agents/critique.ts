@@ -208,7 +208,7 @@ export async function critiqueAgent(email: any) {
   // ── ÉTAPE 2 : Gemini affine et humanise ──
   try {
     const model = gemini.getGenerativeModel({
-      model: "gemini-flash-latest",
+      model: "gemini-1.5-flash",
       generationConfig: {
         temperature: 0.3, // Précision — on corrige, on n'invente pas
         maxOutputTokens: 800

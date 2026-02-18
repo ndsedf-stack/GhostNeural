@@ -245,7 +245,7 @@ export async function eclaireurAgent(
   if (baseScore >= 20 && baseScore <= 70) {
     try {
       const model = gemini.getGenerativeModel({
-        model: "gemini-flash-latest",
+        model: "gemini-1.5-flash",
         generationConfig: { temperature: 0.1, maxOutputTokens: 300 }
       });
 

@@ -351,7 +351,7 @@ RÉPONDS UNIQUEMENT AVEC CE JSON :
 // ─────────────────────────────────────────────────────────────────────────────
 export async function runUltraAudit(scannedData: any, lighthouse: any, sector: string) {
   const model = gemini.getGenerativeModel({
-    model: "gemini-flash-latest",
+    model: "gemini-1.5-flash",
     generationConfig: {
       temperature: 0.3,      // Précision > créativité pour un audit
       maxOutputTokens: 4096, // Observations longues — 2048 était trop juste
@@ -429,7 +429,7 @@ export async function runUltraAudit(scannedData: any, lighthouse: any, sector: s
       _meta: {
         sector_benchmark_used: getSectorBenchmark(sector),
         prompt_version: "2.1",
-        model: "gemini-flash-latest",
+        model: "gemini-1.5-flash",
         body_text_injected: !!scannedData.body_text || !!scannedData.html,
         tokens_estimated_input: 1800,
         tokens_estimated_output: 1200,

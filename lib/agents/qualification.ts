@@ -268,7 +268,7 @@ export async function runQualificationAgent(
   // Il reçoit les données réelles + les scores déjà calculés
   // Sa seule mission : rédiger une raison précise et ajuster ±5 points max
   const model = gemini.getGenerativeModel({
-    model: "gemini-flash-latest",
+    model: "gemini-1.5-flash",
     generationConfig: { temperature: 0.2, maxOutputTokens: 400 }
   });
 
