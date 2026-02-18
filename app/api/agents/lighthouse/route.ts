@@ -17,6 +17,6 @@ export async function POST(req: NextRequest) {
       cls: '1.0',
       ttfb: '9999ms',
       error: e.message
-    }, { status: 200 });
+    }, { status: 500 });
   }
 }

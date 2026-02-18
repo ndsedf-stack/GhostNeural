@@ -21,6 +21,6 @@ export async function POST(req: NextRequest) {
       envoyable: false,
       qualite_score: 50,
       blocages: [e.message]
-    }, { status: 200 });
+    }, { status: 500 });
   }
 }

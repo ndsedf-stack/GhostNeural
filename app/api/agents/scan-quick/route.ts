@@ -7,10 +7,10 @@ export async function POST(req: NextRequest) {
     if (!url) return NextResponse.json({ error: 'url required' }, { status: 400 });
     const data = await scanQuick(url);
     if (!data) {
-      return NextResponse.json({ error: 'Scan failed', status: 0, ttfb: 9999 }, { status: 200 });
+      return NextResponse.json({ error: 'Scan failed', status: 0, ttfb: 9999 }, { status: 500 });
     }
     return NextResponse.json(data);
   } catch (e: any) {
-    return NextResponse.json({ error: e.message, status: 0, ttfb: 9999 }, { status: 200 });
+    return NextResponse.json({ error: e.message, status: 0, ttfb: 9999 }, { status: 500 });
   }
 }

@@ -32,6 +32,6 @@ export async function POST(req: NextRequest) {
       scores: { business: 0, transformation: 0, conversion: 0, rentabilite: 0 },
       priorite: 'basse',
       raison: `Erreur qualification: ${e.message}`
-    }, { status: 200 });
+    }, { status: 500 });
   }
 }

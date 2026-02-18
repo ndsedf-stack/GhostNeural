@@ -30,6 +30,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   } catch (e: any) {
     console.error("[Architecte API] Error:", e);
-    return NextResponse.json({ error: e.message }, { status: 200 });
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }

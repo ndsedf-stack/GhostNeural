@@ -35,6 +35,6 @@ export async function POST(req: NextRequest) {
       point_friction_majeur: 'Site non optimisé',
       solution_strategique: 'Refonte haute conversion',
       ton_recommande: 'direct'
-    }, { status: 200 });
+    }, { status: 500 });
   }
 }
