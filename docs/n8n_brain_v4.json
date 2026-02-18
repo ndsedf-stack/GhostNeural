@@ -595,6 +595,28 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1960, 640]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, pipeline_id: $('✅ Init').first().json.pipeline_id, status: 'rejected', reason: $('💾 Supabase REJECTED').first().json.rejection_reason || 'Inconnu' }) }}"
+      },
+      "id": "response-rejected",
+      "name": "❌ Réponse REJET",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2200, 640]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, pipeline_id: $('✅ Init').first().json.pipeline_id, status: 'quality_review', note: $('🔧 Révision Manuelle').first().json.brain_note || 'Qualité insuffisante' }) }}"
+      },
+      "id": "response-review",
+      "name": "⚠️ Réponse REVIEW",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [7460, 480]
     }
   ],
   "connections": {
@@ -634,7 +656,9 @@
     "💾 Supabase EMAIL_READY": { "main": [[{ "node": "⭐ Priorité haute ?", "type": "main", "index": 0 }]] },
     "⭐ Priorité haute ?": { "main": [[{ "node": "🔔 Slack", "type": "main", "index": 0 }], [{ "node": "✅ Réponse", "type": "main", "index": 0 }]] },
     "🔔 Slack": { "main": [[{ "node": "✅ Réponse", "type": "main", "index": 0 }]] },
-    "🔧 Révision Manuelle": { "main": [[{ "node": "💾 Supabase REVIEW", "type": "main", "index": 0 }]] }
+    "� Supabase REJECTED": { "main": [[{ "node": "❌ Réponse REJET", "type": "main", "index": 0 }]] },
+    "�🔧 Révision Manuelle": { "main": [[{ "node": "💾 Supabase REVIEW", "type": "main", "index": 0 }]] },
+    "💾 Supabase REVIEW": { "main": [[{ "node": "⚠️ Réponse REVIEW", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1", "saveManualExecutions": true, "callerPolicy": "workflowsFromSameOwner" },
   "tags": ["ghostneural", "brain", "autonome", "retry", "v4"],
