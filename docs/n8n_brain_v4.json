@@ -76,7 +76,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 800, system: \"Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown: {\\\"decision\\\":\\\"GO\\\",\\\"confidence\\\":80,\\\"rejection_reason\\\":null,\\\"top_angles\\\":[\\\"angle1\\\",\\\"angle2\\\"],\\\"probleme_critique\\\":\\\"probleme\\\",\\\"ton_optimal\\\":\\\"consultant_expert\\\",\\\"brain_reasoning\\\":\\\"raisonnement\\\",\\\"priorite\\\":\\\"haute\\\",\\\"seuil_qualite_minimum\\\":65,\\\"agent_instructions\\\":{\\\"stratege\\\":\\\"instruction\\\",\\\"architecte\\\":\\\"instruction\\\",\\\"copywriter\\\":\\\"instruction\\\"}}\", messages: [{ role: \"user\", content: \"Analyse ce prospect et decide GO ou REJECT:\\n\" + $json.brain_context }] }) }}"
+        "jsonBody": "={{ { model: 'claude-haiku-4-5-20251001', max_tokens: 800, system: 'Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown: {\"decision\":\"GO\",\"confidence\":80,\"rejection_reason\":null,\"top_angles\":[\"angle1\",\"angle2\"],\"probleme_critique\":\"probleme\",\"ton_optimal\":\"consultant_expert\",\"brain_reasoning\":\"raisonnement\",\"priorite\":\"haute\",\"seuil_qualite_minimum\":65,\"agent_instructions\":{\"stratege\":\"instruction\",\"architecte\":\"instruction\",\"copywriter\":\"instruction\"}}', messages: [{ role: 'user', content: 'Analyse ce prospect et decide GO ou REJECT:\\n' + $json.brain_context }] } }}"
       },
       "id": "brain-llm-1",
       "name": "🧠 Brain LLM Décision 1",
@@ -183,7 +183,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 1200, system: \"Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown: {\\\"decision_finale\\\":\\\"GO\\\",\\\"abort_reason\\\":null,\\\"ca_perdu_estime\\\":\\\"2400 euros/mois\\\",\\\"hook_principal\\\":\\\"accroche\\\",\\\"brain_synthesis\\\":\\\"diagnostic\\\",\\\"score_opportunite\\\":75,\\\"next_action\\\":\\\"email_immediat\\\",\\\"instructions_stratege\\\":\\\"instructions\\\",\\\"instructions_architecte\\\":\\\"instructions\\\",\\\"instructions_copywriter\\\":\\\"instructions\\\",\\\"criteres_validation\\\":{\\\"stratege\\\":\\\"critere\\\",\\\"architecte\\\":\\\"critere\\\",\\\"copywriter\\\":\\\"critere\\\"}}\", messages: [{ role: \"user\", content: \"PLAN INITIAL:\\n\" + JSON.stringify($('📋 Parse Décision 1').first().json.brain_decision_1) + \"\\n\\nAUDIT:\\n\" + JSON.stringify($('🔬 Audit Ultra').first().json) + \"\\n\\nPROSPECT: \" + $('✅ Init').first().json.nom + \" - \" + $('✅ Init').first().json.secteur + \" - \" + $('✅ Init').first().json.ville }] }) }}"
+        "jsonBody": "={{ { model: 'claude-haiku-4-5-20251001', max_tokens: 1200, system: 'Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown: {\"decision_finale\":\"GO\",\"abort_reason\":null,\"ca_perdu_estime\":\"2400 euros/mois\",\"hook_principal\":\"accroche\",\"brain_synthesis\":\"diagnostic\",\"score_opportunite\":75,\"next_action\":\"email_immediat\",\"instructions_stratege\":\"instructions\",\"instructions_architecte\":\"instructions\",\"instructions_copywriter\":\"instructions\",\"criteres_validation\":{\"stratege\":\"critere\",\"architecte\":\"critere\",\"copywriter\":\"critere\"}}', messages: [{ role: 'user', content: 'PLAN INITIAL:\\n' + JSON.stringify($('📋 Parse Décision 1').first().json.brain_decision_1) + '\\n\\nAUDIT:\\n' + JSON.stringify($('🔬 Audit Ultra').first().json) + '\\n\\nPROSPECT: ' + $('✅ Init').first().json.nom + ' - ' + $('✅ Init').first().json.secteur + ' - ' + $('✅ Init').first().json.ville }] } }}"
       },
       "id": "brain-llm-2",
       "name": "🧠 Brain LLM Plan Final",
@@ -219,7 +219,7 @@
         "url": "https://ghost-neural-f36a.vercel.app/api/agents/stratege",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, qualifData: {}, brain_instructions: $json.brain_final.instructions_stratege, brain_top_angles: $json.brain_decision_1.top_angles || [], brain_ton: $json.brain_decision_1.ton_optimal, brain_hook: $json.brain_final.hook_principal }) }}",
+        "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, qualifData: {}, brain_instructions: $json.brain_final.instructions_stratege, brain_top_angles: $json.brain_decision_1.top_angles || [], brain_ton: $json.brain_decision_1.ton_optimal, brain_hook: $json.brain_final.hook_principal } }}",
         "options": { "timeout": 30000 }
       },
       "id": "stratege",
@@ -242,7 +242,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 500, system: \"Evalue l output du Stratege. Reponds UNIQUEMENT en JSON: {\\\"verdict\\\":\\\"APPROVE\\\",\\\"score\\\":80,\\\"raisons\\\":[],\\\"instruction_retry\\\":\\\"\\\"}\", messages: [{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.stratege + \"\\nOUTPUT: \" + JSON.stringify($('🎯 Stratège').first().json) }] }) }}"
+        "jsonBody": "={{ { model: 'claude-haiku-4-5-20251001', max_tokens: 500, system: 'Evalue l output du Stratege. Reponds UNIQUEMENT en JSON: {\"verdict\":\"APPROVE\",\"score\":80,\"raisons\":[],\"instruction_retry\":\"\"}', messages: [{ role: 'user', content: 'CRITERES: ' + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.stratege + '\\nOUTPUT: ' + JSON.stringify($('🎯 Stratège').first().json) }] } }}"
       },
       "id": "brain-eval-stratege",
       "name": "🧠 Brain Eval Stratège",
@@ -278,7 +278,7 @@
         "url": "https://ghost-neural-f36a.vercel.app/api/agents/stratege",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, qualifData: {}, brain_instructions: ($json.brain_final.instructions_stratege || '') + ' CORRECTION: ' + ($json.stratege_retry_instruction || ''), brain_top_angles: $json.brain_decision_1.top_angles || [], brain_ton: $json.brain_decision_1.ton_optimal, brain_hook: $json.brain_final.hook_principal, previous_issues: $json.stratege_eval.raisons || [] }) }}",
+        "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, qualifData: {}, brain_instructions: ($json.brain_final.instructions_stratege || '') + ' CORRECTION: ' + ($json.stratege_retry_instruction || ''), brain_top_angles: $json.brain_decision_1.top_angles || [], brain_ton: $json.brain_decision_1.ton_optimal, brain_hook: $json.brain_final.hook_principal, previous_issues: $json.stratege_eval.raisons || [] } }}",
         "options": { "timeout": 30000 }
       },
       "id": "stratege-retry",
@@ -303,7 +303,7 @@
         "url": "https://ghost-neural-f36a.vercel.app/api/agents/architecte",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, brain_instructions: $json.brain_final.instructions_architecte, stratege_output: $json.stratege_final }) }}",
+        "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, brain_instructions: $json.brain_final.instructions_architecte, stratege_output: $json.stratege_final } }}",
         "options": { "timeout": 30000 }
       },
       "id": "architecte",
@@ -326,7 +326,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 500, system: \"Evalue l output de l Architecte. Reponds UNIQUEMENT en JSON: {\\\"verdict\\\":\\\"APPROVE\\\",\\\"score\\\":80,\\\"raisons\\\":[],\\\"instruction_retry\\\":\\\"\\\"}\", messages: [{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.architecte + \"\\nOUTPUT: \" + JSON.stringify($('🏗️ Architecte').first().json) }] }) }}"
+        "jsonBody": "={{ { model: 'claude-haiku-4-5-20251001', max_tokens: 500, system: 'Evalue l output de l Architecte. Reponds UNIQUEMENT en JSON: {\"verdict\":\"APPROVE\",\"score\":80,\"raisons\":[],\"instruction_retry\":\"\"}', messages: [{ role: 'user', content: 'CRITERES: ' + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.architecte + '\\nOUTPUT: ' + JSON.stringify($('🏗️ Architecte').first().json) }] } }}"
       },
       "id": "brain-eval-archi",
       "name": "🧠 Brain Eval Architecte",
@@ -362,7 +362,7 @@
         "url": "https://ghost-neural-f36a.vercel.app/api/agents/architecte",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, brain_instructions: ($json.brain_final.instructions_architecte || '') + ' CORRECTION: ' + ($json.architecte_retry_instruction || ''), stratege_output: $json.stratege_final, previous_issues: $json.architecte_eval.raisons || [] }) }}",
+        "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, brain_instructions: ($json.brain_final.instructions_architecte || '') + ' CORRECTION: ' + ($json.architecte_retry_instruction || ''), stratege_output: $json.stratege_final, previous_issues: $json.architecte_eval.raisons || [] } }}",
         "options": { "timeout": 30000 }
       },
       "id": "archi-retry",
@@ -387,7 +387,7 @@
         "url": "https://ghost-neural-f36a.vercel.app/api/agents/copywriter",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ strategy: $json.stratege_final, archiData: $json.archi_final, leadInfo: $json.prospect, auditData: $json.audit, brain_instructions: $json.brain_final.instructions_copywriter, brain_hook: $json.brain_final.hook_principal, brain_ca_perdu: $json.brain_final.ca_perdu_estime, brain_ton: $json.brain_decision_1.ton_optimal }) }}",
+        "jsonBody": "={{ { strategy: $json.stratege_final, archiData: $json.archi_final, leadInfo: $json.prospect, auditData: $json.audit, brain_instructions: $json.brain_final.instructions_copywriter, brain_hook: $json.brain_final.hook_principal, brain_ca_perdu: $json.brain_final.ca_perdu_estime, brain_ton: $json.brain_decision_1.ton_optimal } }}",
         "options": { "timeout": 30000 }
       },
       "id": "copywriter",
@@ -410,7 +410,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 1000, system: \"Tu es le Brain Critique Final. Evalue et corrige l email. Reponds UNIQUEMENT en JSON: {\\\"verdict\\\":\\\"APPROVE\\\",\\\"qualite_score\\\":80,\\\"envoyable\\\":true,\\\"raisons_rejet\\\":[],\\\"objet_final\\\":\\\"objet\\\",\\\"corps_final\\\":\\\"corps email complet\\\",\\\"brain_note\\\":\\\"note\\\",\\\"instruction_retry\\\":\\\"\\\"}\", messages: [{ role: \"user\", content: \"EMAIL:\\n\" + JSON.stringify($('✍️ Copywriter').first().json) + \"\\nHOOK=\" + $('✨ Best Architecte').first().json.brain_final.hook_principal + \", CA=\" + $('✨ Best Architecte').first().json.brain_final.ca_perdu_estime }] }) }}"
+        "jsonBody": "={{ { model: 'claude-haiku-4-5-20251001', max_tokens: 1000, system: 'Tu es le Brain Critique Final. Evalue et corrige l email. Reponds UNIQUEMENT en JSON: {\"verdict\":\"APPROVE\",\"qualite_score\":80,\"envoyable\":true,\"raisons_rejet\":[],\"objet_final\":\"objet\",\"corps_final\":\"corps email complet\",\"brain_note\":\"note\",\"instruction_retry\":\"\"}', messages: [{ role: 'user', content: 'EMAIL:\\n' + JSON.stringify($('✍️ Copywriter').first().json) + '\\nHOOK=' + $('✨ Best Architecte').first().json.brain_final.hook_principal + ', CA=' + $('✨ Best Architecte').first().json.brain_final.ca_perdu_estime }] } }}"
       },
       "id": "brain-critique",
       "name": "🧠 Brain Critique Final",
@@ -446,7 +446,7 @@
         "url": "https://ghost-neural-f36a.vercel.app/api/agents/copywriter",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ strategy: $json.stratege_final, archiData: $json.archi_final, leadInfo: $json.prospect, auditData: $json.audit, brain_instructions: ($json.brain_final.instructions_copywriter || '') + ' CORRECTION: ' + ($json.copywriter_retry_instruction || ''), brain_hook: $json.brain_final.hook_principal, brain_ca_perdu: $json.brain_final.ca_perdu_estime, brain_ton: $json.brain_decision_1.ton_optimal, previous_issues: $json.copywriter_eval.raisons_rejet || [] }) }}",
+        "jsonBody": "={{ { strategy: $json.stratege_final, archiData: $json.archi_final, leadInfo: $json.prospect, auditData: $json.audit, brain_instructions: ($json.brain_final.instructions_copywriter || '') + ' CORRECTION: ' + ($json.copywriter_retry_instruction || ''), brain_hook: $json.brain_final.hook_principal, brain_ca_perdu: $json.brain_final.ca_perdu_estime, brain_ton: $json.brain_decision_1.ton_optimal, previous_issues: $json.copywriter_eval.raisons_rejet || [] } }}",
         "options": { "timeout": 30000 }
       },
       "id": "copy-retry",
