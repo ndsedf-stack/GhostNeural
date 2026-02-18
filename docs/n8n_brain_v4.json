@@ -27,7 +27,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ghost-neural-f36a.vercel.app/api/agents/scan-quick",
+        "url": "http://localhost:3000/api/agents/scan-quick",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [{ "name": "url", "value": "={{ $json.site_web }}" }]
@@ -128,7 +128,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ghost-neural-f36a.vercel.app/api/agents/lighthouse",
+        "url": "http://localhost:3000/api/agents/lighthouse",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -157,7 +157,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ghost-neural-f36a.vercel.app/api/agents/audit",
+        "url": "http://localhost:3000/api/agents/audit",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ scannedData: $json.scan_full, lighthouse: $json.lighthouse, secteur: $(\"✅ Init\").first().json.secteur }) }}",
@@ -216,7 +216,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ghost-neural-f36a.vercel.app/api/agents/stratege",
+        "url": "http://localhost:3000/api/agents/stratege",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, qualifData: {}, brain_instructions: $json.brain_final.instructions_stratege, brain_top_angles: $json.brain_decision_1.top_angles || [], brain_ton: $json.brain_decision_1.ton_optimal, brain_hook: $json.brain_final.hook_principal } }}",
@@ -275,7 +275,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ghost-neural-f36a.vercel.app/api/agents/stratege",
+        "url": "http://localhost:3000/api/agents/stratege",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, qualifData: {}, brain_instructions: ($json.brain_final.instructions_stratege || '') + ' CORRECTION: ' + ($json.stratege_retry_instruction || ''), brain_top_angles: $json.brain_decision_1.top_angles || [], brain_ton: $json.brain_decision_1.ton_optimal, brain_hook: $json.brain_final.hook_principal, previous_issues: $json.stratege_eval.raisons || [] } }}",
@@ -300,7 +300,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ghost-neural-f36a.vercel.app/api/agents/architecte",
+        "url": "http://localhost:3000/api/agents/architecte",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, brain_instructions: $json.brain_final.instructions_architecte, stratege_output: $json.stratege_final } }}",
@@ -359,7 +359,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ghost-neural-f36a.vercel.app/api/agents/architecte",
+        "url": "http://localhost:3000/api/agents/architecte",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, brain_instructions: ($json.brain_final.instructions_architecte || '') + ' CORRECTION: ' + ($json.architecte_retry_instruction || ''), stratege_output: $json.stratege_final, previous_issues: $json.architecte_eval.raisons || [] } }}",
@@ -384,7 +384,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ghost-neural-f36a.vercel.app/api/agents/copywriter",
+        "url": "http://localhost:3000/api/agents/copywriter",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { strategy: $json.stratege_final, archiData: $json.archi_final, leadInfo: $json.prospect, auditData: $json.audit, brain_instructions: $json.brain_final.instructions_copywriter, brain_hook: $json.brain_final.hook_principal, brain_ca_perdu: $json.brain_final.ca_perdu_estime, brain_ton: $json.brain_decision_1.ton_optimal } }}",
@@ -443,7 +443,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://ghost-neural-f36a.vercel.app/api/agents/copywriter",
+        "url": "http://localhost:3000/api/agents/copywriter",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { strategy: $json.stratege_final, archiData: $json.archi_final, leadInfo: $json.prospect, auditData: $json.audit, brain_instructions: ($json.brain_final.instructions_copywriter || '') + ' CORRECTION: ' + ($json.copywriter_retry_instruction || ''), brain_hook: $json.brain_final.hook_principal, brain_ca_perdu: $json.brain_final.ca_perdu_estime, brain_ton: $json.brain_decision_1.ton_optimal, previous_issues: $json.copywriter_eval.raisons_rejet || [] } }}",
