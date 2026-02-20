@@ -16,7 +16,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst required = [\"nom\",\"site_web\",\"secteur\",\"ville\"];\nfor (const f of required) if (!body[f]) throw new Error(\"Champ manquant: \"+f);\nlet url = body.site_web.trim();\nif (!url.startsWith(\"http\")) url = \"https://\" + url;\nurl = url.replace(/\\/$/,\"\");\nreturn [{ json: { nom: body.nom.trim(), site_web: url, secteur: body.secteur.toLowerCase().trim(), ville: body.ville.trim(), email: body.email || null, pipeline_id: \"gn_\"+Date.now()+\"_\"+Math.random().toString(36).substr(2,6), started_at: new Date().toISOString(), retry_state: { stratege: 0, architecte: 0, copywriter: 0, max: 2 } } }];"
+        "jsCode": "const input = $input.first().json;\nconst body = input.body || input;\nconst required = [\"nom\",\"site_web\",\"secteur\",\"ville\"];\nfor (const f of required) {\n  if (!body[f]) throw new Error(\"Champ manquant: \" + f);\n}\nlet url = body.site_web.trim();\nif (!url.startsWith(\"http\")) url = \"https://\" + url;\nurl = url.replace(/\\/$/,\"\");\nreturn [{ json: { \n  nom: body.nom.trim(), \n  site_web: url, \n  secteur: body.secteur.toLowerCase().trim(), \n  ville: body.ville.trim(), \n  email: body.email || null, \n  pipeline_id: \"gn_\"+Date.now()+\"_\"+Math.random().toString(36).substr(2,6), \n  started_at: new Date().toISOString(), \n  retry_state: { stratege: 0, architecte: 0, copywriter: 0, max: 2 } \n} }];"
       },
       "id": "init",
       "name": "✅ Init",
@@ -27,12 +27,11 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/agents/scan-quick",
+        "url": "http://localhost:3001/api/agents/scan-quick",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [{ "name": "url", "value": "={{ $json.site_web }}" }]
-        },
-        "options": { "timeout": 15000 }
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ url: $json.site_web }) }}",
+        "options": { "timeout": 30000 }
       },
       "id": "scan-quick",
       "name": "⚡ scanQuick",
@@ -75,8 +74,8 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { model: 'claude-haiku-4-5-20251001', max_tokens: 800, system: 'Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown ni backticks. Format exact: {\"decision\":\"GO\",\"confidence\":80,\"rejection_reason\":null,\"top_angles\":[\"angle1\",\"angle2\"],\"probleme_critique\":\"probleme\",\"ton_optimal\":\"consultant_expert\",\"brain_reasoning\":\"raisonnement\",\"priorite\":\"haute\",\"seuil_qualite_minimum\":65,\"agent_instructions\":{\"stratege\":\"instruction\",\"architecte\":\"instruction\",\"copywriter\":\"instruction\"}}', messages: [{ role: 'user', content: 'Analyse ce prospect et decide GO ou REJECT: ' + $json.brain_context }] } }}",
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 800, system: \"Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown ni backticks.\", messages: [{ role: \"user\", content: \"Analyse ce prospect et decide GO ou REJECT: \" + $json.brain_context }] }) }}",
         "options": { "timeout": 30000 }
       },
       "id": "brain-llm-1",
@@ -110,14 +109,10 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/agents/scan-full",
+        "url": "http://localhost:3001/api/agents/scan-full",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            { "name": "url", "value": "={{ $json.prospect.site_web }}" },
-            { "name": "secteur", "value": "={{ $json.prospect.secteur }}" }
-          ]
-        },
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ url: $json.prospect.site_web, secteur: $json.prospect.secteur }) }}",
         "options": { "timeout": 120000 }
       },
       "id": "scan-full",
@@ -129,13 +124,10 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/agents/lighthouse",
+        "url": "http://localhost:3001/api/agents/lighthouse",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            { "name": "url", "value": "={{ $(\"🛡 Guard Brain GO\").first().json.prospect.site_web }}" }
-          ]
-        },
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ url: $(\"🛡 Guard Brain GO\").first().json.prospect.site_web }) }}",
         "options": { "timeout": 60000 }
       },
       "id": "lighthouse",
@@ -146,22 +138,21 @@
     },
     {
       "parameters": {
-        "mode": "combine",
-        "combineBy": "position"
+        "jsCode": "const all = $input.all();\nconst scan = all.find(i => i.json.full_text || i.json.design_tokens)?.json || {};\nconst lh = all.find(i => i.json.performanceScore !== undefined)?.json || {};\nreturn [{ json: { scan_full: scan, lighthouse: lh } }];"
       },
       "id": "merge-node",
       "name": "🔗 Merge Scan+LH",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 2.1,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [2180, 360]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/agents/audit",
+        "url": "http://localhost:3001/api/agents/audit",
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { scannedData: $json.data0, lighthouse: $json.data1, secteur: $(\"✅ Init\").first().json.secteur } }}",
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ scannedData: $json.scan_full, lighthouse: $json.lighthouse, secteur: $(\"✅ Init\").first().json.secteur }) }}",
         "options": { "timeout": 120000 }
       },
       "id": "audit",
@@ -183,8 +174,8 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { model: 'claude-haiku-4-5-20251001', max_tokens: 1200, system: 'Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown ni backticks. Format: {\"decision_finale\":\"GO\",\"abort_reason\":null,\"ca_perdu_estime\":\"2400 euros/mois\",\"hook_principal\":\"accroche\",\"brain_synthesis\":\"diagnostic\",\"score_opportunite\":75,\"next_action\":\"email_immediat\",\"instructions_stratege\":\"instructions\",\"instructions_architecte\":\"instructions\",\"instructions_copywriter\":\"instructions\",\"criteres_validation\":{\"stratege\":\"critere\",\"architecte\":\"critere\",\"copywriter\":\"critere\"}}', messages: [{ role: 'user', content: 'PLAN INITIAL: ' + JSON.stringify($('📋 Parse Décision 1').first().json.brain_decision_1) + ' AUDIT: ' + JSON.stringify($('🔬 Audit Ultra').first().json) + ' PROSPECT: ' + $('✅ Init').first().json.nom + ' - ' + $('✅ Init').first().json.secteur + ' - ' + $('✅ Init').first().json.ville }] } }}",
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 1200, system: \"Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON.\", messages: [{ role: \"user\", content: \"PLAN INITIAL: \" + JSON.stringify($('📋 Parse Décision 1').first().json.brain_decision_1) + \" AUDIT: \" + JSON.stringify($('🔬 Audit Ultra').first().json) + \" PROSPECT: \" + $('✅ Init').first().json.nom }] }) }}",
         "options": { "timeout": 30000 }
       },
       "id": "brain-llm-2",
@@ -195,7 +186,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nconst text = raw?.content?.find(c=>c.type===\"text\")?.text || \"{}\";\nconst clean = text.replace(/```json\\n?/g,\"\").replace(/```/g,\"\").trim();\nlet parsed;\ntry { parsed = JSON.parse(clean); } catch(e) { parsed = { decision_finale:\"GO\", ca_perdu_estime:\"Non calcule\", hook_principal:\"Votre site perd des clients\", brain_synthesis:\"Site avec problemes\", score_opportunite:60, next_action:\"email_immediat\", instructions_stratege:\"Focus conversion\", instructions_architecte:\"Mobile-first\", instructions_copywriter:\"Direct et chiffre\", criteres_validation:{stratege:\"angle present\",architecte:\"pages listees\",copywriter:\"hook et CA mentionnes\"} }; }\nreturn [{ json: { brain_final: parsed, brain_go_final: parsed.decision_finale===\"GO\", prospect: $(\"✅ Init\").first().json, audit: $(\"🔬 Audit Ultra\").first().json, brain_decision_1: $(\"📋 Parse Décision 1\").first().json.brain_decision_1, retry_state: $(\"✅ Init\").first().json.retry_state } }];"
+        "jsCode": "const raw = $input.first().json;\nconst text = raw?.content?.find(c=>c.type===\"text\")?.text || \"{}\";\nconst clean = text.replace(/```json\\n?/g,\"\").replace(/```/g,\"\").trim();\nlet parsed;\ntry { parsed = JSON.parse(clean); } catch(e) { parsed = { decision_finale:\"GO\", ca_perdu_estime:\"Non calcule\", hook_principal:\"Votre site perd des clients\", brain_synthesis:\"Site avec problemes\", score_opportunite:60, next_action:\"email_immediat\", instructions_stratege:\"Focus conversion\", instructions_architecte:\"Mobile-first\", instructions_copywriter:\"Direct et chiffre\", criteres_validation:{stratege:\"angle present\",architecte:\"pages listees\",copywriter:\"hook et CA mentionnes\"} }; }\nreturn [{ json: { brain_final: parsed, brain_go_final: (parsed.decision_finale || parsed.decision)===\"GO\", prospect: $(\"✅ Init\").first().json, audit: $(\"🔬 Audit Ultra\").first().json, brain_decision_1: $(\"📋 Parse Décision 1\").first().json.brain_decision_1, retry_state: $(\"✅ Init\").first().json.retry_state } }];"
       },
       "id": "parse-brain-2",
       "name": "📋 Parse Plan Final",
@@ -218,11 +209,11 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/agents/stratege",
+        "url": "http://localhost:3001/api/agents/stratege",
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, qualifData: {}, brain_instructions: $json.brain_final.instructions_stratege, brain_top_angles: $json.brain_decision_1.top_angles || [], brain_ton: $json.brain_decision_1.ton_optimal, brain_hook: $json.brain_final.hook_principal } }}",
-        "options": { "timeout": 30000 }
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, qualifData: {}, brain_instructions: $json.brain_final.instructions_stratege, brain_top_angles: $json.brain_decision_1.top_angles || [], brain_ton: $json.brain_decision_1.ton_optimal, brain_hook: $json.brain_final.hook_principal }) }}",
+        "options": { "timeout": 60000 }
       },
       "id": "stratege",
       "name": "🎯 Stratège",
@@ -243,8 +234,8 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { model: 'claude-haiku-4-5-20251001', max_tokens: 500, system: 'Evalue l output du Stratege. Reponds UNIQUEMENT en JSON sans markdown: {\"verdict\":\"APPROVE\",\"score\":80,\"raisons\":[],\"instruction_retry\":\"\"}', messages: [{ role: 'user', content: 'CRITERES: ' + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.stratege + ' OUTPUT: ' + JSON.stringify($('🎯 Stratège').first().json) }] } }}",
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 500, system: \"Evalue l output du Stratege.\", messages: [{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.stratege + \" OUTPUT: \" + JSON.stringify($('🎯 Stratège').first().json) }] }) }}",
         "options": { "timeout": 30000 }
       },
       "id": "brain-eval-stratege",
@@ -278,11 +269,11 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/agents/stratege",
+        "url": "http://localhost:3001/api/agents/stratege",
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, qualifData: {}, brain_instructions: ($json.brain_final.instructions_stratege || '') + ' CORRECTION: ' + ($json.stratege_retry_instruction || ''), brain_top_angles: $json.brain_decision_1.top_angles || [], brain_ton: $json.brain_decision_1.ton_optimal, brain_hook: $json.brain_final.hook_principal, previous_issues: $json.stratege_eval.raisons || [] } }}",
-        "options": { "timeout": 30000 }
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, qualifData: {}, brain_instructions: ($json.brain_final.instructions_stratege || '') + ' CORRECTION: ' + ($json.stratege_retry_instruction || ''), brain_top_angles: $json.brain_decision_1.top_angles || [], brain_ton: $json.brain_decision_1.ton_optimal, brain_hook: $json.brain_final.hook_principal, previous_issues: $json.stratege_eval.raisons || [] }) }}",
+        "options": { "timeout": 60000 }
       },
       "id": "stratege-retry",
       "name": "🔄 Stratège RETRY",
@@ -303,11 +294,11 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/agents/architecte",
+        "url": "http://localhost:3001/api/agents/architecte",
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, brain_instructions: $json.brain_final.instructions_architecte, stratege_output: $json.stratege_final } }}",
-        "options": { "timeout": 30000 }
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, brain_instructions: $json.brain_final.instructions_architecte, stratege_output: $json.stratege_final }) }}",
+        "options": { "timeout": 60000 }
       },
       "id": "architecte",
       "name": "🏗️ Architecte",
@@ -328,8 +319,8 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { model: 'claude-haiku-4-5-20251001', max_tokens: 500, system: 'Evalue l output de l Architecte. Reponds UNIQUEMENT en JSON sans markdown: {\"verdict\":\"APPROVE\",\"score\":80,\"raisons\":[],\"instruction_retry\":\"\"}', messages: [{ role: 'user', content: 'CRITERES: ' + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.architecte + ' OUTPUT: ' + JSON.stringify($('🏗️ Architecte').first().json) }] } }}",
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 500, system: \"Evalue l output de l Architecte.\", messages: [{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.architecte + \" OUTPUT: \" + JSON.stringify($('🏗️ Architecte').first().json) }] }) }}",
         "options": { "timeout": 30000 }
       },
       "id": "brain-eval-archi",
@@ -363,11 +354,11 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/agents/architecte",
+        "url": "http://localhost:3001/api/agents/architecte",
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, brain_instructions: ($json.brain_final.instructions_architecte || '') + ' CORRECTION: ' + ($json.architecte_retry_instruction || ''), stratege_output: $json.stratege_final, previous_issues: $json.architecte_eval.raisons || [] } }}",
-        "options": { "timeout": 30000 }
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, brain_instructions: ($json.brain_final.instructions_architecte || '') + ' CORRECTION: ' + ($json.architecte_retry_instruction || ''), stratege_output: $json.stratege_final, previous_issues: $json.architecte_eval.raisons || [] }) }}",
+        "options": { "timeout": 60000 }
       },
       "id": "archi-retry",
       "name": "🔄 Architecte RETRY",
@@ -388,11 +379,11 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/agents/copywriter",
+        "url": "http://localhost:3001/api/agents/copywriter",
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { strategy: $json.stratege_final, archiData: $json.archi_final, leadInfo: $json.prospect, auditData: $json.audit, brain_instructions: $json.brain_final.instructions_copywriter, brain_hook: $json.brain_final.hook_principal, brain_ca_perdu: $json.brain_final.ca_perdu_estime, brain_ton: $json.brain_decision_1.ton_optimal } }}",
-        "options": { "timeout": 30000 }
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ strategy: $json.stratege_final, archiData: $json.archi_final, leadInfo: $json.prospect, auditData: $json.audit, brain_instructions: $json.brain_final.instructions_copywriter, brain_hook: $json.brain_final.hook_principal, brain_ca_perdu: $json.brain_final.ca_perdu_estime, brain_ton: $json.brain_decision_1.ton_optimal }) }}",
+        "options": { "timeout": 60000 }
       },
       "id": "copywriter",
       "name": "✍️ Copywriter",
@@ -413,8 +404,8 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { model: 'claude-haiku-4-5-20251001', max_tokens: 1000, system: 'Tu es le Brain Critique Final. Evalue et corrige l email. Reponds UNIQUEMENT en JSON sans markdown: {\"verdict\":\"APPROVE\",\"qualite_score\":80,\"envoyable\":true,\"raisons_rejet\":[],\"objet_final\":\"objet\",\"corps_final\":\"corps email complet\",\"brain_note\":\"note\",\"instruction_retry\":\"\"}', messages: [{ role: 'user', content: 'EMAIL: ' + JSON.stringify($('✍️ Copywriter').first().json) + ' HOOK=' + $('✨ Best Architecte').first().json.brain_final.hook_principal + ', CA=' + $('✨ Best Architecte').first().json.brain_final.ca_perdu_estime }] } }}",
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 1000, system: \"Tu es le Brain Critique Final.\", messages: [{ role: \"user\", content: \"EMAIL: \" + JSON.stringify($('✍️ Copywriter').first().json) + \" HOOK=\" + $('✨ Best Architecte').first().json.brain_final.hook_principal }] }) }}",
         "options": { "timeout": 30000 }
       },
       "id": "brain-critique",
@@ -448,11 +439,11 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/agents/copywriter",
+        "url": "http://localhost:3001/api/agents/copywriter",
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { strategy: $json.stratege_final, archiData: $json.archi_final, leadInfo: $json.prospect, auditData: $json.audit, brain_instructions: ($json.brain_final.instructions_copywriter || '') + ' CORRECTION: ' + ($json.copywriter_retry_instruction || ''), brain_hook: $json.brain_final.hook_principal, brain_ca_perdu: $json.brain_final.ca_perdu_estime, brain_ton: $json.brain_decision_1.ton_optimal, previous_issues: $json.copywriter_eval.raisons_rejet || [] } }}",
-        "options": { "timeout": 30000 }
+        "specifyBody": "string",
+        "body": "={{ JSON.stringify({ strategy: $json.stratege_final, archiData: $json.archi_final, leadInfo: $json.prospect, auditData: $json.audit, brain_instructions: ($json.brain_final.instructions_copywriter || '') + ' CORRECTION: ' + ($json.copywriter_retry_instruction || ''), brain_hook: $json.brain_final.hook_principal, brain_ca_perdu: $json.brain_final.ca_perdu_estime, brain_ton: $json.brain_decision_1.ton_optimal, previous_issues: $json.copywriter_eval.raisons_rejet || [] }) }}",
+        "options": { "timeout": 60000 }
       },
       "id": "copy-retry",
       "name": "🔄 Copywriter RETRY",
@@ -472,7 +463,7 @@
     },
     {
       "parameters": {
-        "respondWith": "json",
+        "respondWith": "allContext",
         "responseBody": "={{ { success: true, pipeline_id: $(\"✅ Init\").first().json.pipeline_id, status: $(\"📦 Assembly Final\").first().json.status, score_opportunite: $(\"📦 Assembly Final\").first().json.score_opportunite, score_email: $(\"📦 Assembly Final\").first().json.score_qualite_email, brain_synthesis: $(\"📦 Assembly Final\").first().json.brain_synthesis, ca_perdu: $(\"📦 Assembly Final\").first().json.brain_ca_perdu, email_objet: $(\"📦 Assembly Final\").first().json.email_objet, email_body: $(\"📦 Assembly Final\").first().json.email_body } }}"
       },
       "id": "response-ok",
@@ -503,7 +494,7 @@
     "📋 Parse Décision 1": { "main": [[{ "node": "🛡 Guard Brain GO", "type": "main", "index": 0 }]] },
     "🛡 Guard Brain GO": { "main": [[{ "node": "🕷️ Scan Full", "type": "main", "index": 0 }, { "node": "🏎️ Lighthouse", "type": "main", "index": 0 }], [{ "node": "❌ Réponse REJET", "type": "main", "index": 0 }]] },
     "🕷️ Scan Full": { "main": [[{ "node": "🔗 Merge Scan+LH", "type": "main", "index": 0 }]] },
-    "🏎️ Lighthouse": { "main": [[{ "node": "🔗 Merge Scan+LH", "type": "main", "index": 1 }]] },
+    "🏎️ Lighthouse": { "main": [[{ "node": "🔗 Merge Scan+LH", "type": "main", "index": 0 }]] },
     "🔗 Merge Scan+LH": { "main": [[{ "node": "🔬 Audit Ultra", "type": "main", "index": 0 }]] },
     "🔬 Audit Ultra": { "main": [[{ "node": "🧠 Brain LLM Plan Final", "type": "main", "index": 0 }]] },
     "🧠 Brain LLM Plan Final": { "main": [[{ "node": "📋 Parse Plan Final", "type": "main", "index": 0 }]] },
@@ -529,5 +520,5 @@
     "📦 Assembly Final": { "main": [[{ "node": "✅ Réponse", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1", "saveManualExecutions": true },
-  "tags": ["ghostneural", "brain", "v4-final-clean"]
+  "tags": ["ghostneural", "brain", "v4-debug-3001"]
 }
