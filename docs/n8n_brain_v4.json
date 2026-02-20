@@ -739,6 +739,59 @@
         200,
         300
       ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseFirstInput"
+      },
+      "id": "merge-stratege-id",
+      "name": "⚓ Merge Stratege",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        4260,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseFirstInput"
+      },
+      "id": "merge-archi-id",
+      "name": "⚓ Merge Archi",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        5580,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseFirstInput"
+      },
+      "id": "merge-copy-id",
+      "name": "⚓ Merge Copy",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        6900,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition"
+      },
+      "id": "merge-scan-lh-v2",
+      "name": "⚓ Merge Scan+LH (Robust)",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        2080,
+        360
+      ]
     }
   ],
   "connections": {
@@ -853,7 +906,7 @@
       "main": [
         [
           {
-            "node": "🔗 Merge Scan+LH",
+            "node": "⚓ Merge Scan+LH (Robust)",
             "type": "main",
             "index": 0
           }
@@ -864,9 +917,9 @@
       "main": [
         [
           {
-            "node": "🔗 Merge Scan+LH",
+            "node": "⚓ Merge Scan+LH (Robust)",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -970,7 +1023,7 @@
       "main": [
         [
           {
-            "node": "✨ Best Stratège",
+            "node": "⚓ Merge Stratege",
             "type": "main",
             "index": 0
           }
@@ -988,9 +1041,9 @@
       "main": [
         [
           {
-            "node": "✨ Best Stratège",
+            "node": "⚓ Merge Stratege",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -1043,7 +1096,7 @@
       "main": [
         [
           {
-            "node": "✨ Best Architecte",
+            "node": "⚓ Merge Archi",
             "type": "main",
             "index": 0
           }
@@ -1061,9 +1114,9 @@
       "main": [
         [
           {
-            "node": "✨ Best Architecte",
+            "node": "⚓ Merge Archi",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -1116,7 +1169,7 @@
       "main": [
         [
           {
-            "node": "📦 Assembly Final",
+            "node": "⚓ Merge Copy",
             "type": "main",
             "index": 0
           }
@@ -1134,9 +1187,9 @@
       "main": [
         [
           {
-            "node": "📦 Assembly Final",
+            "node": "⚓ Merge Copy",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -1157,6 +1210,50 @@
         [
           {
             "node": "✅ Init",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚓ Merge Stratege": {
+      "main": [
+        [
+          {
+            "node": "✨ Best Stratège",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚓ Merge Archi": {
+      "main": [
+        [
+          {
+            "node": "✨ Best Architecte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚓ Merge Copy": {
+      "main": [
+        [
+          {
+            "node": "📦 Assembly Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚓ Merge Scan+LH (Robust)": {
+      "main": [
+        [
+          {
+            "node": "🔗 Merge Scan+LH",
             "type": "main",
             "index": 0
           }
