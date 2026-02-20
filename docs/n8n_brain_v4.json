@@ -27,7 +27,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3001/api/agents/scan-quick",
+        "url": "http://localhost:3000/api/agents/gatekeeper",
         "sendBody": true,
         "specifyBody": "string",
         "body": "={{ JSON.stringify({ url: $json.site_web }) }}",
@@ -109,7 +109,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3001/api/agents/scan-full",
+        "url": "http://localhost:3000/api/agents/deep-scan",
         "sendBody": true,
         "specifyBody": "string",
         "body": "={{ JSON.stringify({ url: $json.prospect.site_web, secteur: $json.prospect.secteur }) }}",
@@ -124,7 +124,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3001/api/agents/lighthouse",
+        "url": "http://localhost:3000/api/agents/lighthouse",
         "sendBody": true,
         "specifyBody": "string",
         "body": "={{ JSON.stringify({ url: $(\"🛡 Guard Brain GO\").first().json.prospect.site_web }) }}",
@@ -149,7 +149,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3001/api/agents/audit",
+        "url": "http://localhost:3000/api/agents/audit",
         "sendBody": true,
         "specifyBody": "string",
         "body": "={{ JSON.stringify({ scannedData: $json.scan_full, lighthouse: $json.lighthouse, secteur: $(\"✅ Init\").first().json.secteur }) }}",
@@ -209,7 +209,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3001/api/agents/stratege",
+        "url": "http://localhost:3000/api/agents/stratege",
         "sendBody": true,
         "specifyBody": "string",
         "body": "={{ JSON.stringify({ auditData: $json.audit, secteur: $json.prospect.secteur, ville: $json.prospect.ville, qualifData: {}, brain_instructions: $json.brain_final.instructions_stratege, brain_top_angles: $json.brain_decision_1.top_angles || [], brain_ton: $json.brain_decision_1.ton_optimal, brain_hook: $json.brain_final.hook_principal }) }}",
