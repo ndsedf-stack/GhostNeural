@@ -5,7 +5,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "ghostneural-brain",
-        "responseMode": "lastNode",
+        "responseMode": "responseNode",
         "options": {}
       },
       "id": "trigger",
@@ -463,7 +463,7 @@
     },
     {
       "parameters": {
-        "respondWith": "allContext",
+        "respondWith": "json",
         "responseBody": "={{ { success: true, pipeline_id: $(\"✅ Init\").first().json.pipeline_id, status: $(\"📦 Assembly Final\").first().json.status, score_opportunite: $(\"📦 Assembly Final\").first().json.score_opportunite, score_email: $(\"📦 Assembly Final\").first().json.score_qualite_email, brain_synthesis: $(\"📦 Assembly Final\").first().json.brain_synthesis, ca_perdu: $(\"📦 Assembly Final\").first().json.brain_ca_perdu, email_objet: $(\"📦 Assembly Final\").first().json.email_objet, email_body: $(\"📦 Assembly Final\").first().json.email_body } }}"
       },
       "id": "response-ok",
