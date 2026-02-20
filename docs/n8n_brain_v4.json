@@ -109,11 +109,11 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
+        "specifyBody": "string",
         "options": {
           "timeout": 30000
         },
-        "jsonBody": "={{ { model: \"claude-haiku-4-5-20251001\", max_tokens: 800, system: \"Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown ni backticks.\", messages: [{ role: \"user\", content: \"Analyse ce prospect et decide GO ou REJECT: \" + $json.brain_context }] } }}"
+        "body": "={ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 800, system: \"Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown ni backticks.\", messages: [{ role: \"user\", content: \"Analyse ce prospect et decide GO ou REJECT: \" + $json.brain_context }] }) }"
       },
       "id": "brain-llm-1",
       "name": "🧠 Brain LLM Décision 1",
@@ -256,11 +256,11 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
+        "specifyBody": "string",
         "options": {
           "timeout": 30000
         },
-        "jsonBody": "={{ { model: \"claude-haiku-4-5-20251001\", max_tokens: 1200, system: \"Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON.\", messages: [{ role: \"user\", content: \"PLAN INITIAL: \" + JSON.stringify($('📋 Parse Décision 1').first().json.brain_decision_1) + \" AUDIT: \" + JSON.stringify($('🔬 Audit Ultra').first().json) + \" PROSPECT: \" + $('✅ Init').first().json.nom }] } }}"
+        "body": "={ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 1200, system: \"Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON.\", messages: [{ role: \"user\", content: \"PLAN INITIAL: \" + JSON.stringify($('📋 Parse Décision 1').first().json.brain_decision_1) + \" AUDIT: \" + JSON.stringify($('🔬 Audit Ultra').first().json) + \" PROSPECT: \" + $('✅ Init').first().json.nom }] }) }"
       },
       "id": "brain-llm-2",
       "name": "🧠 Brain LLM Plan Final",
@@ -350,11 +350,11 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
+        "specifyBody": "string",
         "options": {
           "timeout": 30000
         },
-        "jsonBody": "={{ { model: \"claude-haiku-4-5-20251001\", max_tokens: 500, system: \"Evalue l output du Stratege.\", messages: [{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.stratege + \" OUTPUT: \" + JSON.stringify($('🎯 Stratège').first().json) }] } }}"
+        "body": "={ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 500, system: \"Evalue l output du Stratege.\", messages: [{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.stratege + \" OUTPUT: \" + JSON.stringify($('🎯 Stratège').first().json) }] }) }"
       },
       "id": "brain-eval-stratege",
       "name": "🧠 Brain Eval Stratège",
@@ -477,11 +477,11 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
+        "specifyBody": "string",
         "options": {
           "timeout": 30000
         },
-        "jsonBody": "={{ { model: \"claude-haiku-4-5-20251001\", max_tokens: 500, system: \"Evalue l output de l Architecte.\", messages: [{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.architecte + \" OUTPUT: \" + JSON.stringify($('🏗️ Architecte').first().json) }] } }}"
+        "body": "={ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 500, system: \"Evalue l output de l Architecte.\", messages: [{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.architecte + \" OUTPUT: \" + JSON.stringify($('🏗️ Architecte').first().json) }] }) }"
       },
       "id": "brain-eval-archi",
       "name": "🧠 Brain Eval Architecte",
@@ -604,11 +604,11 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
+        "specifyBody": "string",
         "options": {
           "timeout": 30000
         },
-        "jsonBody": "={{ { model: \"claude-haiku-4-5-20251001\", max_tokens: 1000, system: \"Tu es le Brain Critique Final.\", messages: [{ role: \"user\", content: \"EMAIL: \" + JSON.stringify($('✍️ Copywriter').first().json) + \" HOOK=\" + $('✨ Best Architecte').first().json.brain_final.hook_principal }] } }}"
+        "body": "={ JSON.stringify({ model: \"claude-haiku-4-5-20251001\", max_tokens: 1000, system: \"Tu es le Brain Critique Final.\", messages: [{ role: \"user\", content: \"EMAIL: \" + JSON.stringify($('✍️ Copywriter').first().json) + \" HOOK=\" + $('✨ Best Architecte').first().json.brain_final.hook_principal }] }) }"
       },
       "id": "brain-critique",
       "name": "🧠 Brain Critique Final",
