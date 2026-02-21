@@ -113,26 +113,7 @@
         "options": {
           "timeout": 30000
         },
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "model",
-              "value": "claude-3-5-sonnet-latest"
-            },
-            {
-              "name": "max_tokens",
-              "value": 1024
-            },
-            {
-              "name": "system",
-              "value": "Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown ni backticks."
-            },
-            {
-              "name": "messages",
-              "value": "={[{ role: \"user\", content: \"Analyse ce prospect et decide GO ou REJECT: \" + $json.brain_context }]}"
-            }
-          ]
-        }
+        "jsonBody": "={ { model: 'claude-3-5-sonnet-latest', max_tokens: 1024, system: `Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown ni backticks.`, messages: [{ role: 'user', content: 'Analyse ce prospect et decide GO ou REJECT: ' + $json.brain_context }] } }"
       },
       "id": "brain-llm-1",
       "name": "🧠 Brain LLM Décision 1",
@@ -279,26 +260,7 @@
         "options": {
           "timeout": 30000
         },
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "model",
-              "value": "claude-3-5-sonnet-latest"
-            },
-            {
-              "name": "max_tokens",
-              "value": 1024
-            },
-            {
-              "name": "system",
-              "value": "Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON."
-            },
-            {
-              "name": "messages",
-              "value": "={[{ role: \"user\", content: \"PLAN INITIAL: \" + JSON.stringify($('📋 Parse Décision 1').first().json.brain_decision_1) + \" AUDIT: \" + JSON.stringify($('🔬 Audit Ultra').first().json) + \" PROSPECT: \" + $('✅ Init').first().json.nom }]}"
-            }
-          ]
-        }
+        "jsonBody": "={ { model: 'claude-3-5-sonnet-latest', max_tokens: 1024, system: `Genere un plan d action detaille.`, messages: [{ role: 'user', content: 'AUDIT: ' + JSON.stringify($json.audit) + ' DECISION: ' + JSON.stringify($('📋 Parse Décision 1').first().json) }] } }"
       },
       "id": "brain-llm-2",
       "name": "🧠 Brain LLM Plan Final",
@@ -392,26 +354,7 @@
         "options": {
           "timeout": 30000
         },
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "model",
-              "value": "claude-3-5-sonnet-latest"
-            },
-            {
-              "name": "max_tokens",
-              "value": 1024
-            },
-            {
-              "name": "system",
-              "value": "Evalue l output du Stratege."
-            },
-            {
-              "name": "messages",
-              "value": "={[{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.stratege + \" OUTPUT: \" + JSON.stringify($('🎯 Stratège').first().json) }]}"
-            }
-          ]
-        }
+        "jsonBody": "={ { model: 'claude-3-5-sonnet-latest', max_tokens: 1024, system: `Evalue l output du Stratege.`, messages: [{ role: 'user', content: 'CRITERES: ' + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.stratege + ' OUTPUT: ' + JSON.stringify($('🎯 Stratège').first().json) }] } }"
       },
       "id": "brain-eval-stratege",
       "name": "🧠 Brain Eval Stratège",
@@ -538,26 +481,7 @@
         "options": {
           "timeout": 30000
         },
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "model",
-              "value": "claude-3-5-sonnet-latest"
-            },
-            {
-              "name": "max_tokens",
-              "value": 1024
-            },
-            {
-              "name": "system",
-              "value": "Evalue l output de l Architecte."
-            },
-            {
-              "name": "messages",
-              "value": "={[{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.architecte + \" OUTPUT: \" + JSON.stringify($('🏗️ Architecte').first().json) }]}"
-            }
-          ]
-        }
+        "jsonBody": "={ { model: 'claude-3-5-sonnet-latest', max_tokens: 1024, system: `Evalue l output de l Architecte.`, messages: [{ role: 'user', content: 'CRITERES: ' + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.architecte + ' OUTPUT: ' + JSON.stringify($('🏗️ Architecte').first().json) }] } }"
       },
       "id": "brain-eval-archi",
       "name": "🧠 Brain Eval Architecte",
@@ -684,26 +608,7 @@
         "options": {
           "timeout": 30000
         },
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "model",
-              "value": "claude-3-5-sonnet-latest"
-            },
-            {
-              "name": "max_tokens",
-              "value": 1024
-            },
-            {
-              "name": "system",
-              "value": "Tu es le Brain Critique Final."
-            },
-            {
-              "name": "messages",
-              "value": "={[{ role: \"user\", content: \"EMAIL: \" + JSON.stringify($('✍️ Copywriter').first().json) + \" HOOK=\" + $('✨ Best Architecte').first().json.brain_final.hook_principal }]}"
-            }
-          ]
-        }
+        "jsonBody": "={ { model: 'claude-3-5-sonnet-latest', max_tokens: 1024, system: `Tu es le Critique Ultra de GhostNeural. Evalue la qualite de l email de prospection.`, messages: [{ role: 'user', content: 'EMAILS: ' + JSON.stringify($json) + ' STRATEGIE: ' + JSON.stringify($('✨ Best Stratège').first().json) + ' ARCHI: ' + JSON.stringify($('✨ Best Architecte').first().json) }] } }"
       },
       "id": "brain-critique",
       "name": "🧠 Brain Critique Final",
