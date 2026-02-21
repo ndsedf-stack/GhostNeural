@@ -109,11 +109,30 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "string",
+        "specifyBody": "json",
         "options": {
           "timeout": 30000
         },
-        "body": "={{ JSON.stringify({ model: \"claude-3-5-haiku-latest\", max_tokens: 800, system: \"Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown ni backticks.\", messages: [{ role: \"user\", content: \"Analyse ce prospect et decide GO ou REJECT: \" + $json.brain_context }] }) }}"
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-3-5-sonnet-latest"
+            },
+            {
+              "name": "max_tokens",
+              "value": 1024
+            },
+            {
+              "name": "system",
+              "value": "Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown ni backticks."
+            },
+            {
+              "name": "messages",
+              "value": "={[{ role: \"user\", content: \"Analyse ce prospect et decide GO ou REJECT: \" + $json.brain_context }]}"
+            }
+          ]
+        }
       },
       "id": "brain-llm-1",
       "name": "🧠 Brain LLM Décision 1",
@@ -256,11 +275,30 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "string",
+        "specifyBody": "json",
         "options": {
           "timeout": 30000
         },
-        "body": "={{ JSON.stringify({ model: \"claude-3-5-haiku-latest\", max_tokens: 1200, system: \"Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON.\", messages: [{ role: \"user\", content: \"PLAN INITIAL: \" + JSON.stringify($('📋 Parse Décision 1').first().json.brain_decision_1) + \" AUDIT: \" + JSON.stringify($('🔬 Audit Ultra').first().json) + \" PROSPECT: \" + $('✅ Init').first().json.nom }] }) }}"
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-3-5-sonnet-latest"
+            },
+            {
+              "name": "max_tokens",
+              "value": 1024
+            },
+            {
+              "name": "system",
+              "value": "Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON."
+            },
+            {
+              "name": "messages",
+              "value": "={[{ role: \"user\", content: \"PLAN INITIAL: \" + JSON.stringify($('📋 Parse Décision 1').first().json.brain_decision_1) + \" AUDIT: \" + JSON.stringify($('🔬 Audit Ultra').first().json) + \" PROSPECT: \" + $('✅ Init').first().json.nom }]}"
+            }
+          ]
+        }
       },
       "id": "brain-llm-2",
       "name": "🧠 Brain LLM Plan Final",
@@ -350,11 +388,30 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "string",
+        "specifyBody": "json",
         "options": {
           "timeout": 30000
         },
-        "body": "={{ JSON.stringify({ model: \"claude-3-5-haiku-latest\", max_tokens: 500, system: \"Evalue l output du Stratege.\", messages: [{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.stratege + \" OUTPUT: \" + JSON.stringify($('🎯 Stratège').first().json) }] }) }}"
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-3-5-sonnet-latest"
+            },
+            {
+              "name": "max_tokens",
+              "value": 1024
+            },
+            {
+              "name": "system",
+              "value": "Evalue l output du Stratege."
+            },
+            {
+              "name": "messages",
+              "value": "={[{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.stratege + \" OUTPUT: \" + JSON.stringify($('🎯 Stratège').first().json) }]}"
+            }
+          ]
+        }
       },
       "id": "brain-eval-stratege",
       "name": "🧠 Brain Eval Stratège",
@@ -477,11 +534,30 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "string",
+        "specifyBody": "json",
         "options": {
           "timeout": 30000
         },
-        "body": "={{ JSON.stringify({ model: \"claude-3-5-haiku-latest\", max_tokens: 500, system: \"Evalue l output de l Architecte.\", messages: [{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.architecte + \" OUTPUT: \" + JSON.stringify($('🏗️ Architecte').first().json) }] }) }}"
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-3-5-sonnet-latest"
+            },
+            {
+              "name": "max_tokens",
+              "value": 1024
+            },
+            {
+              "name": "system",
+              "value": "Evalue l output de l Architecte."
+            },
+            {
+              "name": "messages",
+              "value": "={[{ role: \"user\", content: \"CRITERES: \" + $('📋 Parse Plan Final').first().json.brain_final.criteres_validation.architecte + \" OUTPUT: \" + JSON.stringify($('🏗️ Architecte').first().json) }]}"
+            }
+          ]
+        }
       },
       "id": "brain-eval-archi",
       "name": "🧠 Brain Eval Architecte",
@@ -604,11 +680,30 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "string",
+        "specifyBody": "json",
         "options": {
           "timeout": 30000
         },
-        "body": "={{ JSON.stringify({ model: \"claude-3-5-haiku-latest\", max_tokens: 1000, system: \"Tu es le Brain Critique Final.\", messages: [{ role: \"user\", content: \"EMAIL: \" + JSON.stringify($('✍️ Copywriter').first().json) + \" HOOK=\" + $('✨ Best Architecte').first().json.brain_final.hook_principal }] }) }}"
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-3-5-sonnet-latest"
+            },
+            {
+              "name": "max_tokens",
+              "value": 1024
+            },
+            {
+              "name": "system",
+              "value": "Tu es le Brain Critique Final."
+            },
+            {
+              "name": "messages",
+              "value": "={[{ role: \"user\", content: \"EMAIL: \" + JSON.stringify($('✍️ Copywriter').first().json) + \" HOOK=\" + $('✨ Best Architecte').first().json.brain_final.hook_principal }]}"
+            }
+          ]
+        }
       },
       "id": "brain-critique",
       "name": "🧠 Brain Critique Final",
