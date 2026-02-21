@@ -113,7 +113,7 @@
         "options": {
           "timeout": 30000
         },
-        "jsonBody": "={{ { model: 'claude-haiku-4-5-20251001', max_tokens: 1024, system: `Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown ni backticks.`, messages: [{ role: 'user', content: 'Analyse ce prospect et decide GO ou REJECT: ' + $json.brain_context }] } }}"
+        "jsonBody": "={{ { model: 'claude-3-5-sonnet-latest', max_tokens: 1024, system: `Tu es le Brain de GhostNeural. Reponds UNIQUEMENT en JSON valide sans markdown ni backticks.`, messages: [{ role: 'user', content: 'Analyse ce prospect et decide GO ou REJECT: ' + $json.brain_context }] } }}"
       },
       "id": "brain-llm-1",
       "name": "🧠 Brain LLM Décision 1",
