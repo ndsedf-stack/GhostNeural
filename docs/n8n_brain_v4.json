@@ -678,7 +678,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $input.first().json;\nconst hasEmail = !!d.prospect.email;\nreturn [{ json: { nom: d.prospect.nom, site_web: d.prospect.site_web, secteur: d.prospect.secteur, ville: d.prospect.ville, email: d.prospect.email, score_opportunite: d.brain_final?.score_opportunite || 0, score_qualite_email: d.copywriter_eval?.qualite_score || 0, email_objet: d.copywriter_eval?.objet_final || \"\", email_body: d.copywriter_eval?.corps_final || \"\", brain_synthesis: d.brain_final?.brain_synthesis, brain_ca_perdu: d.brain_final?.ca_perdu_estime, brain_note: d.copywriter_eval?.brain_note, priorite: d.brain_decision_1?.priorite || \"moyenne\", retries_used: d.retry_state, status: hasEmail ? \"email_ready\" : \"no_email\", pipeline_completed_at: new Date().toISOString() } }];"
+        "jsCode": "const d = $input.first().json;\nconst hasEmail = !!d.prospect.email;\n\nreturn [{ json: { \n  nom: d.prospect.nom, \n  site_web: d.prospect.site_web, \n  secteur: d.prospect.secteur, \n  ville: d.prospect.ville, \n  email: d.prospect.email, \n  score_opportunite: d.brain_final?.score_opportunite || 0, \n  score_qualite_email: d.copywriter_eval?.qualite_score || 0, \n  email_objet: d.copywriter_eval?.objet_final || \"\", \n  email_body: d.copywriter_eval?.corps_final || \"\", \n  brain_synthesis: d.brain_final?.brain_synthesis, \n  brain_ca_perdu: d.brain_final?.ca_perdu_estime, \n  status: hasEmail ? \"email_ready\" : \"no_email\",\n  audit_data: { \n    audit: d.audit, \n    brain_decision_1: d.brain_decision_1, \n    brain_final: d.brain_final \n  },\n  proposition_data: {\n    stratege: d.stratege_final,\n    architecte: d.archi_final\n  }\n} }];"
       },
       "id": "assembly",
       "name": "📦 Assembly Final",
@@ -699,7 +699,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        7240,
+        7460,
         260
       ]
     },
@@ -729,6 +729,26 @@
       "position": [
         200,
         300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3002/api/n8n/save",
+        "sendBody": true,
+        "specifyBody": "json",
+        "options": {
+          "timeout": 30000
+        },
+        "jsonBody": "={{ $json }}"
+      },
+      "id": "save-to-db",
+      "name": "💾 Sauvegarder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        7240,
+        260
       ]
     }
   ],
@@ -1138,6 +1158,17 @@
       ]
     },
     "📦 Assembly Final": {
+      "main": [
+        [
+          {
+            "node": "💾 Sauvegarder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Sauvegarder": {
       "main": [
         [
           {
