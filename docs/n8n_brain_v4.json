@@ -719,22 +719,13 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "key-id",
-              "name": "anthropic_api_key",
-              "value": "YOUR_ANTHROPIC_KEY_HERE",
-              "type": "string"
-            }
-          ]
-        },
+        "url": "http://localhost:3002/api/config",
         "options": {}
       },
       "id": "config-node",
       "name": "🔑 CONFIG",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.2,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         200,
         300
