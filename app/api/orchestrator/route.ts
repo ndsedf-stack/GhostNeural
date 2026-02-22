@@ -30,6 +30,7 @@ import {
   COPY_SYSTEM_PROMPT, 
   COPY_USER_PROMPT_TEMPLATE 
 } from '@/lib/prompts/copywriter';
+import { dataReducer } from '@/lib/utils/data-reducer';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
@@ -99,7 +100,10 @@ async function processLead(lead: any, secteur: string, ville: string) {
 
     console.log("[Orchestrator] Running Ultra Audit...");
     const lighthouse = await runLighthouse(lead.site_web);
-    const auditData: any = await runUltraAudit(fullScannedData, lighthouse, secteur);
+    
+    // Transform data using DataReducer
+    const reducedInput = await dataReducer(fullScannedData, lighthouse, secteur, ville);
+    const auditData: any = await runUltraAudit(reducedInput);
 
     if (!auditData) {
       monitoring.captureLeadProcessed(lead.id, 'skipped_error_audit', 0);

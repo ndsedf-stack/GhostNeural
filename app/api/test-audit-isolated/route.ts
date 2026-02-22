@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runUltraAudit } from '@/lib/agents/audit';
+import { dataReducer } from '@/lib/utils/data-reducer';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TEST ROUTE — Test isolé de l'agent Audit
@@ -33,8 +34,8 @@ export async function GET(req: NextRequest) {
 
   const lighthouseData = {
     performanceScore: 65,
-    lcp: '3.2',
-    cls: '0.15',
+    lcp: 3.2, // Must be numeric for Reducer
+    cls: 0.15,
     ttfb: 800,
     total_byte_weight: 1200000
   };
@@ -47,7 +48,8 @@ export async function GET(req: NextRequest) {
   console.log('\n' + '═'.repeat(80) + '\n');
 
   try {
-    const result = await runUltraAudit(scannedData, lighthouseData, secteur) as any;
+    const reducedInput = await dataReducer(scannedData, lighthouseData, secteur, 'Paris');
+    const result = await runUltraAudit(reducedInput) as any;
 
     console.log('\n' + '═'.repeat(80));
     console.log('📊 RÉSULTAT AUDIT');

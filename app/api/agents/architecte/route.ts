@@ -27,10 +27,7 @@ export async function POST(req: NextRequest) {
     const result = await runArchitecteAgent(
       parsedAuditData, 
       secteur || 'default', 
-      ville || 'France', 
-      brain_instructions,
-      previous_issues,
-      stratege_output
+      ville || 'France'
     );
     return NextResponse.json(result);
   } catch (e: any) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runUltraAudit } from '@/lib/agents/audit';
+import { dataReducer } from '@/lib/utils/data-reducer';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +14,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'scannedData required' }, { status: 400 });
     }
 
-    const result = await runUltraAudit(parsedScannedData, parsedLighthouse, secteur || 'default');
+    // Transform data using DataReducer
+    const reducedInput = await dataReducer(parsedScannedData, parsedLighthouse, secteur || 'default', '');
+    const result = await runUltraAudit(reducedInput);
     return NextResponse.json(result);
   } catch (e: any) {
     console.error("[Audit API] Error:", e);

@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       brain_hook,
       brain_ca_perdu,
       brain_ton
-    }, previous_issues);
+    });
     return NextResponse.json(result);
   } catch (e: any) {
     console.error("[Copywriter API] Error:", e);
