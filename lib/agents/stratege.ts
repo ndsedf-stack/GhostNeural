@@ -1,4 +1,11 @@
-import { anthropic, callLLMWithRetry } from '../llm-clients';
+import fs from 'fs';
+import path from 'path';
+import { extractJsonSafe } from '../utils/json';
+
+function debugLog(msg: string) {
+  const logPath = path.join(process.cwd(), 'debug_stratege.log');
+  fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${msg}\n`);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROFILS DÉCIDEURS PAR SECTEUR
@@ -185,107 +192,53 @@ const FEW_SHOT_STRATEGE = `
 // CONSTRUCTEUR DU PROMPT
 // ─────────────────────────────────────────────────────────────────────────────
 function buildStrategePrompt(auditData: any, secteur: string, brainContext?: any, previousIssues?: string[]): string {
-  const personaKey = Object.keys(BUYER_PERSONAS).find(k =>
-    secteur.toLowerCase().includes(k)
-  ) || 'default';
+  const enriched = auditData.enriched_data || {};
+  const business = enriched.business || {};
+  const personaKey = Object.keys(BUYER_PERSONAS).find(k => secteur.toLowerCase().includes(k)) || 'default';
   const persona = BUYER_PERSONAS[personaKey];
 
-  // Extraire les signaux forts de l'audit pour les injecter
-  const piliers = auditData.analyse_piliers || {};
-  const scoreGlobal = auditData.score_global || 0;
-  const lcp = auditData.core_web_vitals?.lcp || 'inconnu';
-  const perfScore = auditData.core_web_vitals?.performance_score || 0;
-  const impactData = auditData.estimation_impact || null;
+  return `Tu es Alexandre, Stratège Business Senior (GhostAgency).
+Ta mission : Transformer un audit technique en une stratégie de vente irrésistible.
 
-  // Identifier le signal le plus fort (pire pilier)
-  const scores = {
-    presence: piliers.presence?.score || 5,
-    esthetique: piliers.esthetique?.score || 5,
-    parcours_ux: piliers.parcours_ux?.score || 5,
-    visibilite: piliers.visibilite_performance?.score || 5,
-  };
-  const worstPilier = Object.entries(scores).sort((a, b) => a[1] - b[1])[0];
-  const worstPilierName = worstPilier[0];
-  const worstPilierScore = worstPilier[1];
-  const worstObservation = piliers[worstPilierName === 'visibilite' ? 'visibilite_performance' : worstPilierName]?.observation || '';
+=== DONNÉES LEAD ===
+- Secteur : ${secteur}
+- Score Global : ${auditData.score_global}/100
+- Faiblesses Majeures : ${JSON.stringify(auditData.faiblesses_majeures)}
+- Business Intelligence : Prop Valeur: "${business.proposition_valeur}", Prix: ${business.positionnement_prix}
+- Impact Business Estimé (Calculé) : ${JSON.stringify(auditData.estimation_impact)}
 
-  return `Tu es le Stratège de GhostNeural — expert en psychologie de vente et conversion B2B.
-Tu dois transformer un audit technique en angle d'attaque émotionnellement percutant.
-Ton job : identifier LA douleur qui va faire agir ce prospect. Pas un audit. Une urgence.
-
-=== PROFIL DU PROSPECT ===
-Secteur : ${secteur}
-Score audit global : ${scoreGlobal}/100
-LCP : ${lcp}
-Performance Lighthouse : ${perfScore}/100
-${impactData ? `Visiteurs perdus/mois estimés : ${impactData.visiteurs_perdus_par_mois || 'non calculé'}
-CA non capté estimé : ${impactData.ca_non_capte_estime || 'non calculé'}` : ''}
-
-=== DIAGNOSTIC PILIERS ===
-- Présence/Crédibilité : ${scores.presence}/10 — ${piliers.presence?.observation?.slice(0, 200) || 'non analysé'}
-- Esthétique/Design : ${scores.esthetique}/10 — ${piliers.esthetique?.observation?.slice(0, 200) || 'non analysé'}
-- Parcours UX : ${scores.parcours_ux}/10 — ${piliers.parcours_ux?.observation?.slice(0, 200) || 'non analysé'}
-- Visibilité/Performance : ${scores.visibilite}/10 — ${piliers.visibilite_performance?.observation?.slice(0, 200) || 'non analysé'}
-
-POINT DE DOULEUR MAXIMAL DÉTECTÉ : Pilier "${worstPilierName}" à ${worstPilierScore}/10
-Observation exacte : "${worstObservation.slice(0, 300)}"
-
-=== PROFIL PSYCHOLOGIQUE DU DÉCIDEUR (${secteur.toUpperCase()}) ===
-Profil type : ${persona.profil} (${persona.age_typique})
-Rapport au digital : ${persona.rapport_au_digital}
-Douleur principale : ${persona.pain_principal}
-Ce qu'il veut vraiment : ${persona.gain_desire}
-Objection n°1 qu'il va sortir : "${persona.objection_numero_1}"
-Comment y répondre : "${persona.reponse_objection}"
-Trigger émotionnel : ${persona.trigger_emotionnel}
-Angle gagnant par défaut pour ce secteur : ${persona.angle_gagnant}
-
-=== INSTRUCTIONS DU BRAIN (ORCHESTRATEUR) ===
-${brainContext?.brain_instructions ? `DIRECTIVES : ${brainContext.brain_instructions}` : 'Pas de directives spécifiques.'}
-${brainContext?.brain_top_angles ? `ANGLES PRIORITAIRES IDENTIFIÉS : ${JSON.stringify(brainContext.brain_top_angles)}` : ''}
-${brainContext?.brain_ton ? `TON DÉCIDÉ : ${brainContext.brain_ton}` : ''}
-${brainContext?.brain_hook ? `HOOK PRINCIPAL DÉCIDÉ : ${brainContext.brain_hook}` : ''}
-
-${previousIssues && previousIssues.length > 0 ? `=== ALERTES / RETOURS SUR LA VERSION PRÉCÉDENTE (RETRY) ===
-Le Brain a rejeté ta version précédente pour les raisons suivantes :
-${previousIssues.map(i => `- ${i}`).join('\n')}
-Tu DOIS impérativement corriger ces points dans cette nouvelle version.` : ''}
-
-=== BIBLIOTHÈQUE DES ANGLES ===
-${ANGLES_LIBRARY}
-
-=== EXEMPLES D'OUTPUTS ATTENDUS ===
-${FEW_SHOT_STRATEGE}
+=== PERSONA CIBLE ===
+${JSON.stringify(persona)}
 
 === TA MISSION ===
-1. Choisis L'angle le plus percutant parmi la bibliothèque — celui qui correspond exactement aux données de cet audit.
-2. Identifie LE point de friction qui fait le plus mal à CE type de décideur (pas à "un prospect générique").
-3. Propose une solution stratégique concrète, chiffrée, spécifique au secteur.
-4. Rédige la réponse à l'objection principale — elle doit être irréfutable.
-5. Fournis un timing optimal basé sur la saisonnalité du secteur.
-6. Suis IMPÉRATIVEMENT les directives du Brain si elles sont fournies ci-dessus.
+Règles d'OR (Tolérance Zéro) :
+1. INTERDICTION FORMELLE d'utiliser des termes génériques comme : "Optimisation Digitale", "Marketing Stratégique", "Transformation Numérique", "Visibilité accrue".
+2. Tu DOIS être SPECIFIQUE. Cite des chiffres (ex: 17s de LCP, -2400€/mois).
+3. Tu DOIS citer au moins deux éléments de la liste "Faiblesses Majeures" que tu as reçue.
+4. AUCUN CHAMP NULL OU VIDE N'EST AUTORISÉ. Si une donnée manque (ex: preuve sociale), tu DOIS l'inférer ou la simuler de manière réaliste par rapport au secteur et au persona.
+5. Si tu détectes une faute de goût ou un contraste avec le positionnement (ex: Sushi Premium avec site Wix gratuit), appuie là où ça fait mal.
+6. Ton but est de créer un choc psychologique chez le prospect.
 
-RÈGLES ABSOLUES :
-- Zéro générique. "Optimisation de Conversion" ou "Obsolescence digitale" sont INTERDITS — ce sont des sorties de fallback, pas des stratégies.
-- Chaque champ doit faire référence aux données réelles de l'audit ci-dessus.
-- Le point_friction_majeur doit citer une donnée précise (LCP, score, pilier, observation).
-- La solution_strategique doit être chiffrée (%, €, délai).
-
-RÉPONDS UNIQUEMENT EN JSON STRICT :
+RÉPONDS EN JSON (Structure stricte) :
 {
-  "angle_approche": "<Titre percutant de l'angle — max 10 mots — ex: 'Incohérence Premium : cuisine 3 étoiles, site 0 étoile'>",
-  "point_friction_majeur": "<Le blocage précis avec données chiffrées tirées de l'audit — 2-3 phrases>",
-  "solution_strategique": "<La transformation concrète proposée avec résultat estimé chiffré — 2 phrases>",
-  "ton_recommande": "<direct | froid | premium | empathique — selon le profil décideur>",
+  "cas_identifie": "Identifiant du cas le plus proche (ex: Incohérence Premium)",
+  "angle_approche": "<Phrase CHOC incluant une faiblesse ou un chiffre - max 12 mots>",
+  "point_friction_majeur": "<Faiblesse précise + impact sur le persona>",
+  "solution_strategique": "<Le changement technique ghostneural + gain financier concret>",
+  "cout_inaction": "<Texte chiffré issu des données d'audit>",
+  "gain_potentiel_estime": "<Texte chiffré issu des données d'audit>",
+  "urgence_business": "faible | modérée | élevée | critique",
+  "priorite_action": "Immédiate | Sous 30 jours | Sous 90 jours",
+  "ton_recommande": "direct | premium | empathique",
+  "timing_ideal": "<Mois ou événement saisonnier - OBLIGATOIRE>",
+  "preuve_sociale": "<Exemple de succès similaire - OBLIGATOIRE>",
+  "budget_roi": "<Investissement estimé vs gain - OBLIGATOIRE>",
   "buyer_persona": {
-    "profil": "<Description précise du décideur pour CE secteur>",
-    "pain_secret": "<La douleur qu'il ne dira jamais en premier mais qui le ronge>",
-    "objection_probable": "<L'objection exacte qu'il va sortir>",
-    "reponse_cle": "<La réponse irréfutable en 1-2 phrases>"
-  },
-  "timing_ideal": "<Le moment optimal pour contacter — avec justification saisonnière>",
-  "preuve_sociale": "<Un cas concret ou une statistique sectorielle crédible>",
-  "budget_roi": "<Fourchette investissement estimée + ROI en langage prospect>"
+    "profil": "<OBLIGATOIRE>",
+    "pain_secret": "<OBLIGATOIRE>",
+    "objection_probable": "<OBLIGATOIRE>",
+    "reponse_cle": "<OBLIGATOIRE - Citer des faiblesses réelles ici>"
+  }
 }`;
 }
 
@@ -293,64 +246,96 @@ RÉPONDS UNIQUEMENT EN JSON STRICT :
 // AGENT PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────────
 export async function strategeAgent(auditData: any, secteur: string, brainContext?: any, previousIssues?: string[]) {
+  debugLog("--- STRATEGE AGENT START ---");
+  const scoreGlobal = auditData?.score_global || 0;
   try {
     const prompt = buildStrategePrompt(auditData, secteur, brainContext, previousIssues);
-
-    const result = await callLLMWithRetry<any>(async () => {
-      const msg = await anthropic.messages.create({
-        model: "claude-3-haiku-20240307", // Haiku — suffisant avec un prompt structuré
-        max_tokens: 1200,
-        temperature: 0.4, // Un peu de créativité pour les angles — pas trop
-        system: `Tu es le Stratège de GhostNeural. Tu transformes des audits techniques en arguments de vente percutants.
-Tu réponds UNIQUEMENT en JSON valide. Jamais de texte en dehors du JSON. Jamais de \`\`\`json ou \`\`\`.
-Tu ne produis jamais d'output générique — chaque réponse est spécifique aux données reçues.`,
-        messages: [{ role: "user", content: prompt }]
-      });
-      return (msg.content[0] as any).text;
+    console.log("[Stratège] Launching Claude Haiku...");
+    
+    // Switch to Anthropic for better structural reliability
+    const { anthropic } = await import('../llm-clients');
+    const response = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 4000, // Increased for more detail
+      system: `Tu es Alexandre, Stratège Business Senior chez GhostAgency. (Logic v2)`,
+      messages: [{ role: "user", content: prompt }]
     });
+
+    const result = response.content[0].type === 'text' ? response.content[0].text : '';
+    debugLog(`RAW RESPONSE:\n${result}`);
 
     if (!result) throw new Error("Échec Stratège — réponse vide");
 
-    // Parsing robuste — nettoie les backticks si Haiku les glisse quand même
-    const cleaned = typeof result === 'string'
-      ? result.replace(/```json|```/g, '').trim()
-      : JSON.stringify(result);
-
-    const parsed = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;
+    const parsed = extractJsonSafe(result);
+    debugLog(`PARSED JSON:\n${JSON.stringify(parsed, null, 2)}`);
 
     // Validation des champs critiques — si vides ou génériques, on log l'alerte
-    const genericValues = ["Optimisation de Conversion", "Obsolescence digitale", "Transformation GhostNeural"];
-    if (genericValues.includes(parsed.angle_approche)) {
-      console.warn("[Stratège] ⚠️ Output générique détecté — vérifier le prompt ou les données d'audit");
+    const genericKeywords = ["optimisation", "marketing", "stratégique", "digital", "transformation"];
+    const angleWords = parsed.angle_approche?.toLowerCase()?.split(/\s+/) || [];
+    const isGeneric = angleWords.every((w: string) => genericKeywords.includes(w.replace(/[^\w]/g, '')));
+    
+    if (isGeneric || !parsed.angle_approche || parsed.angle_approche.length < 5) {
+      console.warn("[Stratège] ⚠️ Output générique ou trop court détecté. Tentative de redressement...");
+      // Forcer un angle lié aux données si possible
+      if (auditData.faiblesses_majeures && auditData.faiblesses_majeures.length > 0) {
+        parsed.angle_approche = `Alerte Critique : ${auditData.faiblesses_majeures[0]}`;
+      }
     }
 
     return {
       // Champs compatibles UI existante — ne pas renommer
-      angle_approche:       parsed.angle_approche       || "Rupture de Valeur Digitale",
+      angle_approche:        parsed.angle_approche        || "Rupture de Valeur Digitale",
       point_friction_majeur: parsed.point_friction_majeur || "Décalage critique entre qualité réelle et présence digitale",
       solution_strategique:  parsed.solution_strategique  || "Refonte conversion-first avec résultats mesurables en 90 jours",
-      ton_recommande:        parsed.ton_recommande        || "direct",
+      ton_recommande:        parsed.ton_recommande         || "direct",
+
+      // ── NOUVEAUX CHAMPS BUSINESS ──────────────────────────────────────────
+      cout_inaction:         parsed.cout_inaction          || "Estimation en cours",
+      gain_potentiel_estime: parsed.gain_potentiel_estime  || "Estimation en cours",
+      urgence_business:      parsed.urgence_business        || null,
+      priorite_action: (() => {
+        const allowed = ["Immédiate", "Sous 30 jours", "Sous 90 jours"];
+        return allowed.includes(parsed.priorite_action)
+          ? parsed.priorite_action
+          : scoreGlobal < 40 ? "Immédiate" : "Sous 30 jours";
+      })(),
+
       // Champs enrichis — disponibles pour le Copywriter et l'Architecte
-      buyer_persona:         parsed.buyer_persona         || null,
-      timing_ideal:          parsed.timing_ideal          || null,
-      preuve_sociale:        parsed.preuve_sociale         || null,
-      budget_roi:            parsed.budget_roi             || null,
+      buyer_persona:         parsed.buyer_persona          || null,
+      timing_ideal:          parsed.timing_ideal           || null,
+      preuve_sociale:        parsed.preuve_sociale          || null,
+      budget_roi:            parsed.budget_roi              || null,
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("⚠️ Erreur Stratège:", error);
+    debugLog(`ERROR: ${error.message}`);
     // Fallback minimal — on évite le générique complet en utilisant les données brutes
-    const scoreGlobal = auditData?.score_global || 0;
+    const currentScoreGlobal = auditData?.score_global || 0; // Renamed to avoid shadowing
     const secteurLabel = secteur || "votre secteur";
+    const impact = auditData.estimation_impact || auditData.pertes_business || {};
+    const lossValue = impact.ca_perdu_mensuel || impact.perte_mensuelle_estimee || 0;
+    const lossText = lossValue > 0 ? `${lossValue}€/mois` : "perte de clients significative";
+    
     return {
-      angle_approche:        `Site ${scoreGlobal < 40 ? 'critique' : 'insuffisant'} pour ${secteurLabel}`,
-      point_friction_majeur: auditData?.analyse_piliers?.parcours_ux?.observation?.slice(0, 150) || "Parcours utilisateur non optimisé",
-      solution_strategique:  "Refonte prioritaire — audit complet disponible sur demande",
-      ton_recommande:        "direct",
-      buyer_persona:         null,
-      timing_ideal:          null,
-      preuve_sociale:        null,
-      budget_roi:            null,
+      cas_identifie: "DIAGNOSTIC D'URGENCE",
+      angle_approche: `Alerte : Votre site vous coûte ~${lossText}`,
+      point_friction_majeur: `Faiblesses critiques détectées : ${auditData.faiblesses_majeures?.join(', ') || 'Incohérences business'}`,
+      solution_strategique: `Refonte GhostNeural pour stopper l'hémorragie de ${lossText}`,
+      cout_inaction: `${lossText} de chiffre d'affaires non-capturé`,
+      gain_potentiel_estime: `Récupération immédiate de ~${lossText}`,
+      urgence_business: currentScoreGlobal > 60 ? "critique" : "élevée",
+      priorite_action: "Immédiate",
+      ton_recommande: "direct",
+      timing_ideal: "Dès maintenant",
+      preuve_sociale: `Cas similaire en ${secteurLabel} : +40% de conversion en 30 jours`,
+      budget_roi: "Rentabilisé en moins de 3 mois",
+      buyer_persona: {
+        profil: `Décideur en ${secteurLabel}`,
+        pain_secret: "Craint d'être dépassé par des concurrents plus modernes",
+        objection_probable: "Manque de temps ou budget",
+        reponse_cle: "Chaque jour d'attente est une perte nette."
+      }
     };
   }
 }

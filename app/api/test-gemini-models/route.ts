@@ -9,7 +9,6 @@ export async function GET(req: NextRequest) {
     // Try different model names that might work
     const modelsToTest = [
       'models/gemini-1.5-pro-latest',
-      'models/gemini-1.5-flash-latest',
       'models/gemini-1.5-flash',
       'models/gemini-1.5-pro',
       'models/gemini-pro'

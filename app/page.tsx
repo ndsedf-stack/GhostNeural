@@ -25,7 +25,15 @@ export default async function WarRoom() {
     ...lead,
     // Ensure nested objects exist to avoid crashes
     audit_data: lead.audit_data || {},
-    proposition_data: lead.proposition_data || {}
+    strategy: lead.strategy || {},
+    archi_data: lead.archi_data || {},
+    qualification: lead.qualification || {},
+    business_potential_score: lead.business_potential_score || 0,
+    estimated_deal_value: lead.estimated_deal_value || 0,
+    closer_output: lead.closer_output || {},
+    proposition_data: lead.proposition_data || {},
+    proposal_data: lead.proposal_data || {},
+    commercial_status: lead.commercial_status || { budget_validated: false, authority_confirmed: false, timing_confirmed: false }
   }));
 
   return <WarRoomDashboard initialLeads={typedLeads} />;

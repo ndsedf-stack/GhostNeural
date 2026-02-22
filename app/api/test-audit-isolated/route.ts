@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
   console.log('\n' + '═'.repeat(80) + '\n');
 
   try {
-    const result = await runUltraAudit(scannedData, lighthouseData, secteur);
+    const result = await runUltraAudit(scannedData, lighthouseData, secteur) as any;
 
     console.log('\n' + '═'.repeat(80));
     console.log('📊 RÉSULTAT AUDIT');

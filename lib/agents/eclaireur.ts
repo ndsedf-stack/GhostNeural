@@ -150,6 +150,8 @@ export interface QuickScanData {
   meta_desc: string;
   ttfb: number;
   status: number;
+  cta_count?: number;
+  cta_primary_present?: boolean;
 }
 
 export interface EclaireurResult {
@@ -160,10 +162,13 @@ export interface EclaireurResult {
   red_flags: string[];
   green_flags: string[];
   signaux: string[];
-  potentiel_transformation: number; // 0–25 — plus c'est haut, meilleur prospect
+  potentiel_transformation: number; // 0–25
   email_detecte: string | null;
-  resume_rapide: string;          // 1 phrase — ce que Gemini a compris du business
-  next_action: string;            // Ce que l'orchestrateur doit faire ensuite
+  resume_rapide: string;
+  next_action: string;
+  // Nouveaux signaux v10
+  design_level?: "low" | "mid" | "high";
+  trust_signals?: string[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -245,7 +250,7 @@ export async function eclaireurAgent(
   if (baseScore >= 20 && baseScore <= 70) {
     try {
       const model = gemini.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.0-flash",
         generationConfig: { temperature: 0.1, maxOutputTokens: 300 }
       });
 
@@ -259,18 +264,21 @@ Title HTML : "${quickData.title}"
 H1 : "${quickData.h1}"
 Meta description : "${quickData.meta_desc}"
 TTFB : ${quickData.ttfb}ms
-HTTP Status : ${quickData.status}
+CTAs détectés : ${quickData.cta_count || 0}
+CTA principal présent : ${quickData.cta_primary_present ? 'OUI' : 'NON'}
 
-Signaux détectés : ${redFlags.concat(greenFlags).join(' | ')}
+Signaux techniques : ${redFlags.concat(greenFlags).join(' | ')}
 
-Question : Ce prospect vaut-il la peine de lancer un audit complet (Playwright + Lighthouse, coûte 30s de serveur) ?
-Extrait aussi l'email si visible dans les données.
+Question : Ce prospect vaut-il la peine de lancer un audit complet ?
+Estime aussi le niveau de design et liste les signaux de confiance (avis, logos, certifications).
 
-Réponds UNIQUEMENT avec ce JSON (max 3 champs) :
+Réponds UNIQUEMENT avec ce JSON :
 {
-  "resume": "<1 phrase — ce que fait ce business>",
-  "email": "<email extrait des données ou null>",
-  "ajustement": <nombre entre -20 et +20 — ajustement du score de base de ${baseScore}>
+  "resume": "<1 phrase>",
+  "email": "<email ou null>",
+  "ajustement": <nombre -20 à +20>,
+  "design_level": "low" | "mid" | "high",
+  "trust_signals": ["Avis Google 4.8", "Logo Qualibat", etc]
 }`;
 
       const result = await callLLMWithRetry<any>(async () => {
@@ -307,11 +315,13 @@ Réponds UNIQUEMENT avec ce JSON (max 3 champs) :
     green_flags: greenFlags,
     signaux: signals,
     potentiel_transformation: transformationScore,
-    email_detecte: geminiInterpretation?.email || emailKnown || null,
-    resume_rapide: geminiInterpretation?.resume || `${nom} — ${secteur} à ${ville}`,
+    email_detecte: (geminiInterpretation as any)?.email || emailKnown || null,
+    resume_rapide: (geminiInterpretation as any)?.resume || `${nom} — ${secteur} à ${ville}`,
     next_action: isGo
       ? `LANCER PIPELINE — priorité ${priorite}`
-      : "SKIP — score insuffisant pour justifier un audit complet"
+      : "SKIP — score insuffisant pour justifier un audit complet",
+    design_level: (geminiInterpretation as any)?.design_level || "mid",
+    trust_signals: (geminiInterpretation as any)?.trust_signals || []
   };
 
   console.log(`[Éclaireur] ${nom} → ${isGo ? '✅ GO' : '❌ NO-GO'} (score: ${scoreFinal}/100, priorité: ${priorite})`);

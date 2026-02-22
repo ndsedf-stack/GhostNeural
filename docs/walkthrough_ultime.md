@@ -1,3 +1,7 @@
+# ⚠️ ARCHIVE — WALKTHROUGH V3/V4 (LEGACY)
+> [!NOTE]
+> Document d'archive de la version "GhostNeural". La version actuelle est **GhostAgency V5**.
+
 # Walkthrough : GhostNeural ULTIME 💎🧠
 
 Le projet a été entièrement rebrandé sous le nom de **GhostNeural** (ghostneural.com) et équipé de la suite de fonctionnalités **ULTIME**. Voici les détails des capacités déployées :

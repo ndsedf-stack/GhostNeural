@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO AVANCÉ -->
+    <title>GhostAgency | Expert Conversion & Performance Web PME</title>
+    <meta name="description" content="Transformez votre site web en machine à clients. Audit gratuit sous 24h. Nous récupérons les clients que vous perdez chaque jour avec une stratégie de conversion radicale.">
+    <meta name="keywords" content="agence web conversion, optimisation site pme, seo local, audit site gratuit, augmentation chiffre d'affaires web">
+    <link rel="canonical" href="https://votre-domaine.com">
+    
+    <!-- OPEN GRAPH (PARTAGE SOCIAUX) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="GhostAgency — Le site n'est rien, la conversion est tout.">
+    <meta property="og:description" content="Audit de performance gratuit pour PME.">
+    
+    <!-- FONTS & ICONES -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- DONNÉES STRUCTURÉES (SEO GOOGLE) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "GhostAgency",
+      "description": "Agence spécialisée en optimisation de conversion et SEO local pour PME.",
+      "url": "https://votre-domaine.com",
+      "priceRange": "$$",
+      "areaServed": "France",
+      "offers": {
+        "@type": "Offer",
+        "name": "Audit Gratuit de Conversion"
+      }
+    }
+    </script>
+
+    <style>
+        :root {
+            --accent: #BFFF00; /* Lime électrique Premium */
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #ffffff; }
+        .serif { font-family: 'Playfair Display', serif; }
+        .text-accent { color: var(--accent); }
+        .bg-accent { background-color: var(--accent); }
+        .border-accent { border-color: var(--accent); }
+        
+        /* Glassmorphism & Effects */
+        .premium-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+        }
+        .premium-card:hover {
+            border-color: var(--accent);
+            background: rgba(191, 255, 0, 0.02);
+        }
+        .grain {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 50;
+        }
+        .glow {
+            position: absolute; width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(191, 255, 0, 0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden">
+    <div class="grain"></div>
+
+    <!-- HEADER MINIMALISTE -->
+    <header class="fixed w-full z-[100] border-b border-white/5 bg-black/80 backdrop-blur-lg">
+        <nav class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="text-xl font-extrabold tracking-tighter uppercase">Ghost<span class="text-accent">Agency</span></div>
+            <a href="#audit" class="bg-accent text-black px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform">
+                Audit Gratuit
+            </a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- HERO SECTION (DENSE & PUNCHY) -->
+        <section class="relative pt-32 pb-16 px-6 overflow-hidden">
+            <div class="glow top-0 right-0"></div>
+            <div class="max-w-6xl mx-auto">
+                <div class="grid lg:grid-cols-12 gap-8 items-center">
+                    <div class="lg:col-span-8">
+                        <span class="inline-block px-3 py-1 border border-accent/30 text-accent text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Performance Production 2024</span>
+                        <h1 class="text-5xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-6 uppercase">
+                            Transformez votre site en <span class="serif italic font-normal text-accent normal-case">machine à clients.</span>
+                        </h1>
+                        <p class="text-lg text-gray-400 max-w-xl mb-8 leading-relaxed">
+                            Votre site ne devrait pas être une vitrine, mais votre <strong class="text-white">meilleur commercial.</strong> Nous identifions où vous perdez des ventes et comment les récupérer sous 24h.
+                        </p>
+                        <div class="flex flex-wrap gap-4 items-center">
+                            <a href="#audit" class="bg-white text-black px-8 py-4 rounded-full font-extrabold text-sm uppercase tracking-wider hover:bg-accent transition-all">
+                                Recevoir mon audit gratuit
+                            </a>
+                            <div class="text-[11px] text-gray-500 uppercase tracking-widest font-semibold italic">
+                                Analyse personnalisée sous 24h <br> sans engagement
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-4 hidden lg:block">
+                        <div class="premium-card p-6 rounded-2xl border-l-4 border-l-accent">
+                            <div class="mb-4">
+                                <div class="text-xs text-gray-500 font-bold uppercase">Manque à gagner moyen</div>
+                                <div class="text-4xl font-black text-accent">-14.400€ / an</div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between text-xs border-b border-white/5 pb-2">
+                                    <span>Vitesse Mobile</span>
+                                    <span class="text-red-500 font-bold">CRITIQUE</span>
+                                </div>
+                                <div class="flex justify-between text-xs border-b border-white/5 pb-2">
+                                    <span>Taux de conversion</span>
+                                    <span class="text-red-500 font-bold">1.2%</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span>Visibilité Locale</span>
+                                    <span class="text-red-500 font-bold">FAIBLE</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROBLEM & STATS (CONCENTRÉ) -->
+        <section class="py-16 bg-white/5">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="premium-card p-8 rounded-xl">
+                        <i data-lucide="zap-off" class="text-accent mb-4"></i>
+                        <h3 class="font-bold text-xl mb-2 italic">Trop lent sur mobile</h3>
+                        <p class="text-sm text-gray-400">53% des visiteurs partent après 3 secondes. Votre lenteur enrichit vos concurrents.</p>
+                    </div>
+                    <div class="premium-card p-8 rounded-xl">
+                        <i data-lucide="mouse-pointer-click" class="text-accent mb-4"></i>
+                        <h3 class="font-bold text-xl mb-2 italic">Zéro appel à l'action</h3>
+                        <p class="text-sm text-gray-400">Si on doit chercher pour vous contacter, vous avez déjà perdu la vente.</p>
+                    </div>
+                    <div class="premium-card p-8 rounded-xl">
+                        <i data-lucide="eye-off" class="text-accent mb-4"></i>
+                        <h3 class="font-bold text-xl mb-2 italic">Invisible localement</h3>
+                        <p class="text-sm text-gray-400">Google ne vous voit pas, vos clients potentiels non plus.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROOF (CASE STUDY LUXE) -->
+        <section class="py-20 px-6">
+            <div class="max-w-5xl mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl lg:text-5xl font-black uppercase tracking-tighter italic">Résultats <span class="text-accent">Mesurables.</span></h2>
+                </div>
+                <div class="premium-card rounded-3xl overflow-hidden flex flex-col md:flex-row">
+                    <div class="p-10 md:w-1/2 border-b md:border-b-0 md:border-r border-white/10">
+                        <span class="text-accent font-bold text-xs uppercase tracking-widest">Étude de Cas : Restaurant</span>
+                        <h4 class="text-3xl font-black mt-2 mb-6 leading-tight uppercase italic">"Doubler ses réservations en 60 jours"</h4>
+                        <ul class="space-y-4">
+                            <li class="flex items-center gap-3 text-sm">
+                                <i data-lucide="check" class="w-4 h-4 text-accent"></i> Chargement mobile : 8s → 1.2s
+                            </li>
+                            <li class="flex items-center gap-3 text-sm">
+                                <i data-lucide="check" class="w-4 h-4 text-accent"></i> SEO Local : Top 3 Google Maps
+                            </li>
+                            <li class="flex items-center gap-3 text-sm">
+                                <i data-lucide="check" class="w-4 h-4 text-accent"></i> Conversion : +42% de réservations
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="p-10 md:w-1/2 flex items-center justify-center bg-accent/5">
+                        <div class="text-center">
+                            <div class="text-6xl font-black text-accent tracking-tighter">+42%</div>
+                            <div class="text-xs uppercase tracking-[0.3em] font-bold mt-2">Chiffre d'Affaires Web</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- METHOD (ULTRA DENSE) -->
+        <section class="py-20 bg-black">
+            <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-4xl font-black uppercase mb-8 italic tracking-tighter leading-none">Notre Approche <br><span class="text-accent text-5xl">Radicale.</span></h2>
+                    <div class="space-y-8">
+                        <div class="flex gap-6">
+                            <span class="text-accent font-black text-2xl italic">01.</span>
+                            <div>
+                                <h4 class="font-bold uppercase tracking-widest text-sm mb-1">Audit Data-Driven</h4>
+                                <p class="text-gray-400 text-sm">On ne devine pas. On mesure chaque clic perdu.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-6">
+                            <span class="text-accent font-black text-2xl italic">02.</span>
+                            <div>
+                                <h4 class="font-bold uppercase tracking-widest text-sm mb-1">Refonte Performance</h4>
+                                <p class="text-gray-400 text-sm">On supprime le superflu. On garde ce qui vend.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-6">
+                            <span class="text-accent font-black text-2xl italic">03.</span>
+                            <div>
+                                <h4 class="font-bold uppercase tracking-widest text-sm mb-1">Domination SEO</h4>
+                                <p class="text-gray-400 text-sm">On force Google à vous placer devant vos concurrents locaux.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="premium-card p-10 rounded-2xl bg-white text-black">
+                    <h3 class="text-2xl font-black uppercase mb-4 italic">La Garantie Ghost</h3>
+                    <p class="font-medium mb-6">Si vos indicateurs clés (vitesse, visibilité, conversion) ne s'améliorent pas, nous travaillons gratuitement jusqu'à atteindre l'objectif.</p>
+                    <div class="flex items-center gap-2 font-black uppercase text-xs tracking-widest">
+                        <i data-lucide="shield-check" class="text-black"></i> 100% Transparent. 0% Risque.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA FINAL (CONVERSION MAXIMALE) -->
+        <section id="audit" class="py-24 relative overflow-hidden">
+            <div class="glow bottom-0 left-0"></div>
+            <div class="max-w-3xl mx-auto px-6 text-center">
+                <h2 class="text-5xl lg:text-7xl font-black uppercase tracking-tighter mb-6 italic leading-none">Combien de clients <span class="text-accent underline">perdez-vous</span> ce soir ?</h2>
+                <p class="text-gray-400 mb-10 text-lg">L'audit est gratuit. L'inaction est coûteuse. Recevez votre plan d'action personnalisé sous 24h.</p>
+                
+                <form class="premium-card p-8 rounded-3xl text-left border-accent/20" onsubmit="event.preventDefault(); alert('Audit envoyé !');">
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <input type="text" placeholder="Nom complet" class="bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-accent transition-all text-sm" required>
+                        <input type="email" placeholder="Email professionnel" class="bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-accent transition-all text-sm" required>
+                    </div>
+                    <input type="url" placeholder="URL de votre site actuel (ex: https://monsite.fr)" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-accent transition-all text-sm mb-4" required>
+                    <button type="submit" class="w-full bg-accent text-black font-black uppercase py-5 rounded-xl text-sm tracking-[0.2em] hover:scale-[1.02] transition-transform">
+                        Lancer mon analyse gratuite →
+                    </button>
+                    <p class="text-[10px] text-gray-500 mt-4 text-center uppercase tracking-widest">Réponse garantie sous 24h par un expert. Pas de bot.</p>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-10 border-t border-white/5 text-center">
+        <div class="text-lg font-black tracking-tighter uppercase mb-2 italic">Ghost<span class="text-accent">Agency</span></div>
+        <p class="text-[10px] text-gray-600 uppercase tracking-widest">© 2024 GhostAgency — Performance, Pas de blabla.</p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Reveal animations on scroll
+        const observerOptions = { threshold: 0.1 };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = "1";
+                    entry.target.style.transform = "translateY(0)";
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.premium-card').forEach(el => {
+            el.style.opacity = "0";
+            el.style.transform = "translateY(20px)";
+            el.style.transition = "all 0.6s ease-out";
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

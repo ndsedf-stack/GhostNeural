@@ -1,3 +1,7 @@
+# ⚠️ LEGACY — N8N MIGRATION KIT
+> [!NOTE]
+> Kit obsolète. La migration vers TypeScript est terminée en V5.
+
 # N8N Migration Kit — GhostNeural v2.0
 
 Ce document contient les instructions, les workflows et les adaptateurs d'API nécessaires pour migrer le pipeline GhostNeural vers une orchestration N8N.

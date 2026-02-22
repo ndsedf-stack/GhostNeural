@@ -1,60 +1,54 @@
-# 👻 GHOSTNEURAL — Brain Autonome v4 (Retry Loops)
+# 👻 GHOSTNEURAL V5 — THE CLOSING LAYER 💰🚀
 
-GhostNeural est un système multi-agents **auto-géré** conçu pour l'ultra-personnalisation de la prospection B2B. Contrairement aux pipelines linéaires classiques, GhostNeural utilise une orchestration n8n pour créer des boucles de feedback et d'auto-correction entre les agents.
+GhostNeural est le cerveau autonome de GhostAgency. Il transforme la prospection web en une machine de guerre commerciale, capable de détecter, d'analyser et de **closer** des leads haute-valeur en moins de 60 secondes.
 
-## 🚀 Architecture Brain v4
+## 🚀 Architecture V5 (Industrial Layer)
 
-### **Orchestration n8n (Le Cerveau Central)**
-Le pipeline n'est plus un script figé mais un workflow dynamique capable de :
-- **Évaluer** chaque étape du processus via le Brain LLM.
-- **Auto-Corriger** les erreurs en renvoyant des instructions précises aux agents.
-- **Retry Automatique** : Jusqu'à 2 tentatives de correction par agent si le score de qualité n'est pas atteint.
+### **Diamond Scoring & Closer AI**
+Le pipeline V5 ne se contente plus de trouver des défauts techniques, il vend des solutions business :
+- **Diamond Scoring** : Priorisation automatique par Potentiel Business et Solvabilité.
+- **Agent Closer** : Génération de roadmaps ROI sur 12 mois et devis auto-adaptés.
+- **Winning Patterns** : Injection de connaissances sectorielles prouvées dans la conception.
 
-### **Les Agents Spécialisés**
-1. **Éclaireur** : Gatekeeper déterministe (Scan technique rapide).
-2. **Qualification** : Analyse 4 piliers (Business, Transformation, UX, Rentabilité).
-3. **Audit Ultra** : Diagnostic technique profond avec benchmarks sectoriels.
-4. **Stratège (v4)** : Création d'angles psychologiques avec correction suite au feedback Brain.
-5. **Architecte (v4)** : Structure de site & wireframes synchronisés sur l'angle approuvé.
-6. **Copywriter (v4)** : Rédaction A/B/C avec insertion dynamique des métriques d'audit et CA perdu.
-7. **Critique Final** : Juge suprême capable de réécrire l'email final pour garantir l'excellence.
+### **Pipeline des Agents (Next-Gen Orchestration)**
+1. **Éclaireur** : Scan technique ultra-rapide.
+2. **Qualification** : Diamond Scoring (Business + Opportunity).
+3. **Audit Ultra (V5)** : Diagnostic clinique et quantification des pertes financières.
+4. **Stratège** : Angle d'attaque ROI-centric.
+5. **Architecte** : Conception "Anti-Template" basée sur les patterns gagnants.
+6. **Closer AI** : Générateur de roadmap et d'offre commerciale.
+7. **Copywriter** : Rédaction chirurgicale avec injection ROI.
+8. **Critique** : Gardien suprême de la qualité GhostAgency.
 
-## 🛠 Installation & Mise en Service
+## 🛠 Installation & Setup
 
-### 1. Infrastructure Infrastructure
-GhostNeural nécessite deux composants :
-- **Next.js (Vercel)** : Pour faire tourner les agents et le dashboard.
-- **n8n (Hetzner VPS ou Local)** : Pour l'orchestration autonome.
+### 1. Stack Technique
+- **Frontend/API** : Next.js 14 (App Router)
+- **Database** : Supabase (PostgreSQL)
+- **LLMs** : Gemini 1.5 Pro / 2.0 Flash & Claude 3.5 Haiku
 
-### 2. Variables d'Environnement
-Dans ton `.env.local` et tes secrets n8n :
+### 2. Configuration
+Crée un fichier `.env.local` :
 ```bash
-# LLMs & APIs
-ANTHROPIC_API_KEY=sk-ant-...
+# LLMs
 GEMINI_API_KEY=AIzaSy...
-NEXT_APP_URL=https://ton-app.vercel.app
+ANTHROPIC_API_KEY=sk-ant-...
 
-# Tracking & Storage
-SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_ANON_KEY=eyJ...
-SLACK_BOT_TOKEN=xoxb-... (Optionnel)
+# Infrastructure
+NEXT_PUBLIC_SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+RESEND_API_KEY=...
 ```
 
-### 3. Workflow n8n
-Le workflow complet est disponible dans [`docs/n8n_brain_v4.json`](./docs/n8n_brain_v4.json).
-Importe-le dans ton instance n8n pour activer le pipeline.
+### 3. Migrations
+Exécute les scripts dans `supabase/migrations/` dans l'ordre, notamment le `06-closing-layer-columns.sql` pour activer les fonctions de la V5.
 
-## 📊 War Room Premium
-L'interface Next.js te permet de :
-- Surveiller les leads qualifiés en temps réel.
-- Consulter les audits détaillés et les propositions architecturales.
-- Voir le raisonnement du **Brain** et le nombre de **Retries** utilisés pour chaque email.
-- Valider et envoyer les emails via Lemlist/Resend.
+## 📊 War Room Commerciale
+L'interface de pilotage permet de :
+- Gérer le pipeline de prospection en temps réel.
+- Visualiser le ROI projeté et les roadmaps pour chaque lead.
+- Expédier des emails de signature personnalisés en un clic.
 
-## 🎯 Coûts & Performance
-- **Coût** : ~0.005€ / prospect (Gemini 1.5 Flash + Claude 3.5 Haiku).
-- **Fiabilité** : Tolérance aux pannes via les retry loops n8n.
-- **Conversion** : Ultra-personnalisation basée sur les "pain points" réels détectés par l'audit.
-
-## 🛡 Licence
-Propriété exclusive de GhostAgency (Nicolas Distefano).
+## 🛡 Licence & Vision
+Propriété exclusive de GhostAgency (Nicolas Distefano).  
+**Vision** : 100% de conversions captées. 0% de bullshit technique.

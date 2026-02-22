@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
       brain_hook,
       brain_ca_perdu,
       brain_ton,
-      previous_issues
+      previous_issues,
+      enrichedData
     } = await req.json();
     
     // Ensure data is parsed
@@ -29,7 +30,8 @@ export async function POST(req: NextRequest) {
     const enrichedLeadInfo = {
       ...parsedLeadInfo,
       archi_data: parsedArchiData,
-      audit_data: parsedAuditData
+      audit_data: parsedAuditData,
+      enriched_data: enrichedData || parsedLeadInfo?.enriched_data
     };
 
     const result = await runCopywriterAgent(parsedStrategy, enrichedLeadInfo, {

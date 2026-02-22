@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import pLimit from 'p-limit';
+import fs from 'fs';
+import path from 'path';
+
+function logToFile(msg: string) {
+  const logPath = path.join(process.cwd(), 'debug_api.log');
+  const timestamp = new Date().toISOString();
+  fs.appendFileSync(logPath, `[${timestamp}] [LEGACY API] ${msg}\n`);
+}
 import { 
   gemini, 
   openai, 
@@ -12,8 +20,7 @@ import {
   ENRICH_USER_PROMPT_TEMPLATE 
 } from '@/lib/prompts/enrichissement';
 import { 
-  AUDIT_SYSTEM_PROMPT, 
-  AUDIT_USER_PROMPT_TEMPLATE 
+  AUDIT_SYSTEM_PROMPT
 } from '@/lib/prompts/audit';
 import { 
   ARCHI_SYSTEM_PROMPT, 
@@ -92,7 +99,7 @@ async function processLead(lead: any, secteur: string, ville: string) {
 
     console.log("[Orchestrator] Running Ultra Audit...");
     const lighthouse = await runLighthouse(lead.site_web);
-    const auditData = await runUltraAudit(fullScannedData, lighthouse, secteur);
+    const auditData: any = await runUltraAudit(fullScannedData, lighthouse, secteur);
 
     if (!auditData) {
       monitoring.captureLeadProcessed(lead.id, 'skipped_error_audit', 0);
@@ -130,25 +137,45 @@ async function processLead(lead: any, secteur: string, ville: string) {
       return { status: 'rejected', reason: qualityCheck.reason, leadId: lead.id };
     }
 
-    // 6. Store in Supabase
+    // 6. Store in Supabase (UPSERT to allow reprocessing)
     step = "Database: Store Lead";
-    const finalAuditData = { ...auditData, qualification };
-    const { data: dbData, error } = await supabaseAdmin.from('leads').insert([{
+    
+    // Multi-path safe parsing
+    const safeGet = (data: any) => {
+      if (!data) return {};
+      if (typeof data === 'string') {
+        try { return JSON.parse(data); } catch(e) { return {}; }
+      }
+      return data.audit || data.strategy || data.architecture || data;
+    };
+
+    const cleanAudit = safeGet(auditData);
+    const cleanStrategy = safeGet(strategy);
+    const cleanArchi = safeGet(architecture);
+
+    const finalAuditData = { 
+      ...cleanAudit, 
+      analyse_piliers: cleanAudit.analyse_piliers,
+      qualification 
+    };
+    
+    const { data: dbData, error } = await supabaseAdmin.from('leads').upsert([{
       nom: lead.nom || 'Direct Lead',
       secteur: secteur || 'Général',
       ville: ville || 'Inconnue',
       site_web: lead.site_web,
       email: targetEmail,
-      score_audit: qualification.score_global || auditData.score_technique || 50,
+      score_audit: qualification.score_global || cleanAudit.score_global || 50,
       audit_data: finalAuditData,
       proposition_data: {
-        strategy: strategy,
-        architecture: architecture
+        strategy: cleanStrategy,
+        architecture: cleanArchi
       },
       email_objet: finalEmail.objet_final,
       email_body: finalEmail.corps_final,
-      status: 'email_ready'
-    }]).select();
+      status: 'email_ready',
+      updated_at: new Date().toISOString()
+    }], { onConflict: 'site_web' }).select();
 
     if (error) {
        console.error("Supabase Insert Error:", error);
@@ -168,17 +195,91 @@ async function processLead(lead: any, secteur: string, ville: string) {
 
 export async function POST(req: NextRequest) {
   try {
+    logToFile('--- NEW REQUEST RECEIVED ON LEGACY API ---');
     const body = await req.json();
+    logToFile(`Body: ${JSON.stringify(body)}`);
     const { ville, secteur, max_results = 5, leads: providedLeads = [] } = body;
 
     let targetLeads = providedLeads;
 
     if (body.website_url || body.site_web) {
+      let url = String(body.website_url || body.site_web).trim();
+      if (!url.startsWith("http")) url = "https://" + url;
+      url = url.replace(/\/$/, ""); // Remove trailing slash to match N8N
+
       targetLeads = [{
         nom: body.company_name || body.nom || 'Direct Lead',
-        site_web: body.website_url || body.site_web,
+        site_web: url,
         email: body.email || null
       }];
+    }
+
+    // Check for N8N trigger flag
+    if (body.trigger_n8n) {
+      console.log("[Orchestrator] Triggering N8N Flow...");
+      
+      // Try both production and test webhooks just in case
+      const webhookUrls = [
+        'http://127.0.0.1:5678/webhook/ghostneural-brain',
+        'http://127.0.0.1:5678/webhook-test/ghostneural-brain'
+      ];
+
+      console.log(`[Orchestrator] Starting N8N trigger logic. Webhooks to try: ${webhookUrls.length}`);
+
+      let lastError = null;
+      for (const url of webhookUrls) {
+        try {
+          console.log(`[Orchestrator] TRIGGERING URL: ${url}`);
+          const n8nResp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nom: body.company_name || body.nom || 'Direct Lead',
+              site_web: body.website_url || body.site_web,
+              secteur: body.secteur || 'autre',
+              ville: body.ville || 'France',
+              email: body.email || null
+            }),
+            signal: AbortSignal.timeout(60000) // Increase to 60s for full flow completion
+          });
+
+          console.log(`[Orchestrator] Response status from ${url}: ${n8nResp.status}`);
+
+          if (n8nResp.ok) {
+            const text = await n8nResp.text();
+            let n8nData = {};
+            if (text && text.trim()) {
+              try {
+                n8nData = JSON.parse(text);
+              } catch (e) {
+                console.warn(`[Orchestrator] Could not parse n8n response as JSON: ${text.substring(0, 100)}`);
+                n8nData = { rawResponse: text };
+              }
+            }
+            
+            console.log(`[Orchestrator] SUCCESS: N8N Flow completed via ${url}`);
+            return NextResponse.json({ 
+              message: 'N8N Triggered', 
+              webhook: url,
+              n8n: n8nData 
+            });
+          } else {
+            const errText = await n8nResp.text();
+            console.error(`[Orchestrator] FAILED ${url} - Status ${n8nResp.status}: ${errText}`);
+            lastError = `${n8nResp.status} ${errText}`;
+          }
+        } catch (e: any) {
+          console.error(`[Orchestrator] CATCH ERROR for ${url}:`, e.message);
+          lastError = e.message;
+        }
+      }
+
+      console.error("[Orchestrator] ALL WEBHOOKS FAILED. Last error:", lastError);
+      return NextResponse.json({ 
+        error: 'N8N_TRIGGER_FAILED', 
+        details: lastError,
+        suggestion: "Vérifiez que n8n est actif et que le Webhook est en mode Production/Activé."
+      }, { status: 502 });
     }
 
     if (targetLeads.length === 0) {

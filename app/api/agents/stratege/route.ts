@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
       brain_top_angles, 
       brain_ton, 
       brain_hook,
-      previous_issues
+      previous_issues,
+      enrichedData
     } = await req.json();
     
     // Ensure auditData is parsed
@@ -18,6 +19,11 @@ export async function POST(req: NextRequest) {
     
     if (!parsedAuditData) {
       return NextResponse.json({ error: 'auditData required' }, { status: 400 });
+    }
+
+    // Inject enrichedData if passed separately
+    if (enrichedData) {
+      parsedAuditData.enriched_data = enrichedData;
     }
 
     const result = await strategeAgent(parsedAuditData, secteur || 'default', {

@@ -1,6 +1,6 @@
-# 📖 LA BIBLE GHOSTAGENCY.AI V2
+# 📖 LA BIBLE GHOSTAGENCY.AI V5 — THE CLOSING LAYER 💰🚀
 
-Ce document est le référentiel unique de GhostAgency.ai V2. Il contient la vision stratégique, l'architecture technique et les procédures opérationnelles.
+Ce document est le référentiel unique de GhostAgency.ai V5. Il contient la vision stratégique (Signature-First), l'architecture technique et les procédures de closing.
 
 ---
 
@@ -10,11 +10,12 @@ L'objectif est d'automatiser à 95% la prospection pour la création de sites we
 
 Le système utilise un "Cheval de Troie" : l'envoi d'un micro-audit gratuit et personnalisé pour engager la conversation.
 
-### **Différenciation V2**
-- **Feedback Loop** : Le système apprend de ses succès et injecte automatiquement les patterns gagnants dans les prompts
-- **7 Agents Premium** : Pipeline optimisé avec Éclaireur, Qualification, Scan Full, Audit Ultra, Stratège, Architecte, Copywriter, Critique
-- **5 Guards** : Protection qualité à chaque étape critique
-- **Tracking Complet** : Webhooks Resend + Analytics hebdomadaire
+### **Différenciation V5 (Closing Layer)**
+- **Diamond Scoring** : Priorisation des leads par Potentiel Business (€) et Solvabilité, pas seulement par douleur technique.
+- **Closer AI (NOUVEAU)** : Agent spécialisé générant des Roadmaps ROI en 3 phases et des devis auto-adaptés.
+- **Winning Patterns Library** : Moat de connaissances injectant des structures de conversion prouvées par secteur.
+- **Commercial War Room** : Dashboard transformé en CRM commercial avec valeur de pipeline et probabilité de signature.
+- **Feedback Loop V5** : Apprentissage continu des succès et injection des "Winners" dans les prompts.
 
 ---
 
@@ -27,20 +28,20 @@ Le système utilise un "Cheval de Troie" : l'envoi d'un micro-audit gratuit et p
 - **Délivrabilité** : Resend API (SDK principal)
 - **Cron** : Vercel Cron Jobs (feedback loop hebdomadaire)
 
-### **Matrice des Agents & Modèles**
-
 | Phase | Agent | Modèle | Rôle | Durée |
 |:---:|:---|:---|:---|:---:|
+| **-1** | **Chasseur** | Google Places + Scraper | Sourcing haute précision (Maps + Email scraping) | 5-10s/lead |
 | **0** | **Éclaireur** | Gemini Flash | Scan rapide (meta, h1, design tokens) | 2-3s |
-| **1** | **Qualification** | Gemini Flash | Filtre 4 piliers (Business, Transformation, Conversion, Rentabilité) | 3-5s |
+| **1** | **Qualification** | Gemini Flash | **Diamond Scoring** (Business Potential + Opp. Score) | 3-5s |
 | **2** | **Scan Full** | - | Analyse complète (sitemap, body text, Lighthouse) | 8-12s |
-| **3** | **Audit Ultra** | Gemini Flash | Diagnostic premium avec benchmarks sectoriels | 5-8s |
-| **4** | **Stratège** | Claude 3.5 Sonnet | Angle d'attaque psychologique + ton recommandé | 4-6s |
-| **5** | **Architecte** | Claude 3.5 Sonnet | Conception structure site & wireframes | 6-10s |
-| **6** | **Copywriter** | Claude 3 Haiku | Rédaction copywriting (3 variantes A/B/C) | 8-12s |
-| **7** | **Critique** | Gemini Flash | Audit qualité hybride (60% déterministe + 40% LLM) | 3-5s |
+| **3** | **Audit Ultra** | **Gemini 1.5 Pro** | **Total Autopsy V5** (Observation/Score Correlation Strict) | 15-20s |
+| **4** | **Stratège** | **Gemini 1.5 Pro** | Angle psychologique (ROI & Coût Inaction) | 10-15s |
+| **5** | **Architecte** | **Gemini 1.5 Pro** | Structure site (Anti-Template + Winning Patterns) | 12-18s |
+| **6** | **Closer AI** | **Gemini 2.0 Flash** | **ROI Phasing** (Roadmap 3 phases & Devis Auto) | 5-8s |
+| **7** | **Copywriter** | Claude 3 Haiku | Rédaction Copywriting (Injection ROI + Patterns) | 8-12s |
+| **8** | **Critique** | Gemini Flash | Audit qualité final (Seuil 60/100) | 3-5s |
 
-**Durée totale pipeline** : ~40-60s par lead
+**Durée totale pipeline** : ~45-70s par lead
 
 ---
 
@@ -96,12 +97,15 @@ L'agent est calibré avec **2 exemples détaillés** (Restaurant score 28, Cabin
 - **Règles absolues** : Jamais d'observation vague, toujours chiffrer l'impact, toujours comparer au secteur
 - **Méthodologie** : Score pondéré (Présence 25% + Esthétique 20% + UX 30% + Performance 25%)
 
-### **Estimation d'Impact Business**
-Chaque audit inclut désormais :
-- **Visiteurs perdus/mois** : Estimation basée sur SEO et performance
-- **CA non capté** : Fourchette en €/mois selon le secteur
-- **Taux de conversion actuel** : Estimé selon CTAs et structure
-- **Taux de conversion potentiel** : Atteignable après refonte
+### **Estimation d'Impact Business & ROI (V5)**
+Chaque lead bénéficie maintenant d'une projection commerciale complète :
+- **Diamond Business Score** (0-100) : Mesure la valeur intrinsèque du client.
+- **Projets ROI sur 12 mois** : Calcul automatique du CA récupérable.
+- **Multiplicateur d'Investissement** : Justification mathématique du devis.
+- **Roadmap de Transformation** : Plan d'action séquencé pour sécuriser le closing.
+
+> [!NOTE]
+> **Outdated V2 Logic** : Auparavant, le système se focalisait sur les faiblesses techniques. En V5, la technique n'est qu'un levier pour une proposition de valeur commerciale.
 
 ---
 
@@ -160,11 +164,19 @@ Chaque audit inclut désormais :
 
 ## 📈 6. PROCÉDURES OPÉRATIONNELLES (SOP)
 
-### **Phase 1 : Sourcing & Pipeline**
-Lancement via l'interface War Room ou via API :
+### **Phase 1 : Sourcing & Pipeline Auto-Trigger**
+Lancement via l'interface War Room ou via l'API Sourcing pour un mode "Full Autopilot" :
+
+**Mode Preview (Sourcing uniquement) :**
 ```bash
-POST /api/orchestrator-v2 { "ville": "Lyon", "secteur": "restaurant" }
+POST /api/sourcing { "ville": "Lyon", "secteur": "restaurant", "pipeline": false }
 ```
+
+**Mode Full Autopilot (Sourcing + Pipeline automatique) :**
+```bash
+POST /api/sourcing { "ville": "Lyon", "secteur": "restaurant", "pipeline": true }
+```
+*Le système chasse les leads, les insère en base, puis lance séquentiellement le pipeline industriel pour chacun (avec un délai de 1s pour les rate-limits).*
 
 ### **Phase 2 : Validation (War Room)**
 1. **Email Editor** : Clique sur un lead pour ouvrir le panneau latéral
@@ -316,6 +328,6 @@ Exécuter dans l'ordre :
 
 ---
 
-**Dernière mise à jour** : 2024-02-17  
-**Version** : 2.0  
+**Dernière mise à jour** : 2026-02-22  
+**Version** : 5.0 (The Closing Layer)  
 **Auteur** : GhostAgency Team

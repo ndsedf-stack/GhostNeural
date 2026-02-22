@@ -1,3 +1,7 @@
+# ⚠️ LEGACY — RUNBOOK V2 (DÉPRÉCIÉ)
+> [!IMPORTANT]
+> Référez-vous à la nouvelle interface War Room V5. Les commandes API V2 sont obsolètes.
+
 # 🚀 RUNBOOK GHOSTAGENCY V2
 
 Guide pas à pas pour lancer votre première campagne avec le système auto-apprenant.

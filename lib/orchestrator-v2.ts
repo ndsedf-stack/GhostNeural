@@ -11,15 +11,19 @@
 
 import { eclaireurAgent }        from '@/lib/agents/eclaireur';
 import { runQualificationAgent } from '@/lib/agents/qualification';
+import { runEnrichisseurAgent }  from '@/lib/agents/enrichisseur';
 import { scanFullSite, scanQuick } from '@/lib/tools/pageScanner';
 import { runUltraAudit }         from '@/lib/agents/audit';
 import { runLighthouse }         from '@/lib/tools/lighthouseRunner';
 import { strategeAgent }         from '@/lib/agents/stratege';
 import { runArchitecteAgent }    from '@/lib/agents/architecte';
+import { runCloserAgent }        from '@/lib/agents/closer';
+import { runProposalGenerator }  from '@/lib/agents/proposal';
 import { runCopywriterAgent }    from '@/lib/agents/copywriter';
 import { critiqueAgent }         from '@/lib/agents/critique';
 import { supabaseAdmin }         from '@/lib/supabase/admin';
 import { monitoring }            from '@/lib/monitoring';
+import { dataReducer }           from '@/lib/utils/data-reducer';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -63,8 +67,7 @@ function guardEclaireur(result: any): boolean {
 // Guard 2 : La Qualification confirme-t-elle l'intérêt ?
 function guardQualification(result: any): boolean {
   return result?.prospect_interessant === true
-    && result?.score_global >= 50
-    && result?.scores?.transformation >= 5; // Critère éliminatoire inviolable
+    && result?.score_global >= 40; // Seuil v2 plus permissif pour laisser l'Enrichisseur approfondir
 }
 
 // Guard 3 : L'Audit est-il exploitable ?
@@ -90,9 +93,10 @@ function guardEmail(lead: LeadInput, eclaireurResult: any): string | null {
 // HELPERS — Sauvegarde en base
 // ─────────────────────────────────────────────────────────────────────────────
 async function saveLead(data: any): Promise<string> {
+  console.log('[DB] saveLead status:', data.status);
   const { data: inserted, error } = await supabaseAdmin
     .from('leads')
-    .insert([data])
+    .upsert(data, { onConflict: 'site_web' })
     .select('id')
     .single();
 
@@ -107,17 +111,16 @@ async function saveLead(data: any): Promise<string> {
 // ─────────────────────────────────────────────────────────────────────────────
 // PIPELINE PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────────
-export async function runPipeline(lead: LeadInput): Promise<PipelineResult> {
+export async function runPipeline(lead: LeadInput, existingLeadId?: string): Promise<PipelineResult> {
   const startTime = Date.now();
   console.log(`\n${'─'.repeat(60)}`);
-  console.log(`[Pipeline] START → ${lead.nom} | ${lead.site_web}`);
+  console.log(`[Pipeline] START → ${lead.nom} | ${lead.site_web} (ID: ${existingLeadId || 'NEW'})`);
   console.log(`${'─'.repeat(60)}`);
 
+  let leadId = existingLeadId;
+
   // ════════════════════════════════════════════════════════════════
-  // PHASE 0 — ÉCLAIREUR (scanQuick déjà effectué en amont)
-  // Input  : quickData (title, h1, meta, ttfb, status) + nom + secteur + ville
-  // Output : { go, score_eclaireur, priorite, red_flags, green_flags, email_detecte }
-  // Guard  : go === true && score >= 35
+  // PHASE 0 — ÉCLAIREUR
   // ════════════════════════════════════════════════════════════════
   console.log(`[0/7] Éclaireur → scan rapide...`);
   let quickData: any;
@@ -126,7 +129,7 @@ export async function runPipeline(lead: LeadInput): Promise<PipelineResult> {
   } catch (e) {
     console.error('[0/7] scanQuick failed:', e);
     monitoring.captureLeadProcessed(lead.site_web, 'error_pipeline', 0);
-    return { leadId: null, status: 'error_pipeline', raison_rejet: 'scanQuick failed' };
+    return { leadId: leadId || null, status: 'error_pipeline', raison_rejet: 'scanQuick failed' };
   }
 
   const eclaireurResult = await eclaireurAgent(
@@ -140,29 +143,40 @@ export async function runPipeline(lead: LeadInput): Promise<PipelineResult> {
 
   if (!guardEclaireur(eclaireurResult)) {
     monitoring.captureLeadProcessed(lead.site_web, 'rejected_eclaireur', eclaireurResult.score_eclaireur);
-    // Sauvegarde en base pour analytics (on veut savoir ce qu'on rejette)
-    const leadId = await saveLead({
+    
+    const updateData = {
       ...lead,
       status: 'rejected',
       rejection_stage: 'eclaireur',
       score: eclaireurResult.score_eclaireur,
+      priorite: eclaireurResult.priorite,
       raison_rejet: eclaireurResult.raison_rejet,
       red_flags: eclaireurResult.red_flags,
-    });
+      updated_at: new Date(),
+      processed_at: new Date().toISOString()
+    };
+
+    if (leadId) {
+      await supabaseAdmin.from('leads').update(updateData).eq('id', leadId);
+    } else {
+      leadId = await saveLead(updateData);
+    }
+    
     return { leadId, status: 'rejected_eclaireur', score: eclaireurResult.score_eclaireur, raison_rejet: eclaireurResult.raison_rejet };
   }
 
   // ════════════════════════════════════════════════════════════════
   // PHASE 1 — QUALIFICATION
-  // Input  : url + secteur + quickData (déjà disponible) + nom + ville
-  // Output : { scores{4 piliers}, score_global, prospect_interessant, priorite, raison, angle_rapide, budget_estime }
-  // Guard  : prospect_interessant === true && score_global >= 50 && transformation >= 8
   // ════════════════════════════════════════════════════════════════
   console.log(`[1/7] Qualification → scoring 4 piliers...`);
   const qualifResult = await runQualificationAgent(
     lead.site_web,
     lead.secteur,
-    quickData,        // ← données réelles, pas l'URL
+    {
+      ...quickData,
+      design_level: eclaireurResult.design_level,
+      trust_signals: eclaireurResult.trust_signals
+    },
     lead.nom,
     lead.ville
   );
@@ -170,23 +184,32 @@ export async function runPipeline(lead: LeadInput): Promise<PipelineResult> {
 
   if (!guardQualification(qualifResult)) {
     monitoring.captureLeadProcessed(lead.site_web, 'rejected_qualification', qualifResult.score_global);
-    const leadId = await saveLead({
+    
+    const updateData = {
       ...lead,
       status: 'rejected',
       rejection_stage: 'qualification',
       score: qualifResult.score_global,
+      business_potential_score: qualifResult.business_potential?.score || 0,
+      estimated_deal_value: qualifResult.business_potential?.estimated_deal_value || 0,
+      priorite: qualifResult.priorite,
       raison_rejet: qualifResult.raison,
       qualification: qualifResult.scores,
-    });
+      updated_at: new Date(),
+      processed_at: new Date().toISOString()
+    };
+
+    if (leadId) {
+      await supabaseAdmin.from('leads').update(updateData).eq('id', leadId);
+    } else {
+      leadId = await saveLead(updateData);
+    }
+    
     return { leadId, status: 'rejected_qualification', score: qualifResult.score_global, raison_rejet: qualifResult.raison };
   }
 
   // ════════════════════════════════════════════════════════════════
   // PHASE 2 — SCAN COMPLET + LIGHTHOUSE
-  // Input  : url
-  // Output : scannedData (design_tokens, inner_links, body_text, image_count, form_count, cta_count...)
-  //        + lighthouseData (performanceScore, lcp, cls, ttfb, total_byte_weight)
-  // Guard  : pas d'erreur critique
   // ════════════════════════════════════════════════════════════════
   console.log(`[2/7] Scan complet + Lighthouse...`);
   let scannedData: any;
@@ -199,10 +222,9 @@ export async function runPipeline(lead: LeadInput): Promise<PipelineResult> {
   } catch (e) {
     console.error('[2/7] Scan/Lighthouse failed:', e);
     monitoring.captureLeadProcessed(lead.site_web, 'error_scan', qualifResult.score_global);
-    return { leadId: null, status: 'error_scan', raison_rejet: 'Scan or Lighthouse failed' };
+    return { leadId: leadId || null, status: 'error_scan', raison_rejet: 'Scan or Lighthouse failed' };
   }
 
-  // Enrichit scannedData avec les données de quickData déjà disponibles
   scannedData = {
     ...(scannedData || {}),
     url: lead.site_web,
@@ -211,7 +233,6 @@ export async function runPipeline(lead: LeadInput): Promise<PipelineResult> {
     meta_description: scannedData?.meta_description || quickData?.meta_desc || '',
   };
 
-  // Sécurité : si lighthouseData est null, créer un objet minimal
   if (!lighthouseData) {
     lighthouseData = {
       performanceScore: 0,
@@ -222,189 +243,162 @@ export async function runPipeline(lead: LeadInput): Promise<PipelineResult> {
     };
   }
 
-
   // ════════════════════════════════════════════════════════════════
-  // PHASE 3 — AUDIT ULTRA
-  // Input  : scannedData (complet) + lighthouseData + secteur
-  // Output : { analyse_piliers{4}, core_web_vitals, seo, sitemap_cible,
-  //            verdict_strategique, opportunite_majeure, score_global,
-  //            estimation_impact, screenshot_url, design_tokens }
-  // Guard  : pas d'error + score_global présent + analyse_piliers présent
+  // PHASE 3 — ENRICHISSEMENT BUSINESS
   // ════════════════════════════════════════════════════════════════
-  console.log(`[3/7] Audit Ultra...`);
-  const auditData = await runUltraAudit(scannedData, lighthouseData, lead.secteur);
-
-  // DEBUG: Log complet de l'audit pour identifier le problème
-  console.log('[3/7] Audit result:', JSON.stringify(auditData, null, 2));
-  console.log('[3/7] Guard checks:', {
-    hasError: !!auditData?.error,
-    hasScoreGlobal: typeof auditData?.score_global === 'number',
-    hasAnalysePiliers: auditData?.analyse_piliers !== undefined,
-    scoreValue: auditData?.score_global,
-    piliersKeys: auditData?.analyse_piliers ? Object.keys(auditData.analyse_piliers) : 'undefined'
+  console.log(`[3/8] Enrichisseur → business intelligence...`);
+  const enrichedData = await runEnrichisseurAgent({
+    ...scannedData,
+    performance_score: lighthouseData.performanceScore,
+    ttfb: lighthouseData.ttfb,
+    status: scannedData.status,
+    https: scannedData.https
   });
 
-  if (!guardAudit(auditData)) {
-    console.error('[3/7] Audit failed or incomplete');
-    console.error('[3/7] Audit data received:', auditData);
-    monitoring.captureLeadProcessed(lead.site_web, 'error_audit', 0);
-    return { leadId: null, status: 'error_audit', raison_rejet: 'Audit returned invalid data' };
-  }
-  console.log(`[3/7] Audit → score: ${auditData.score_global}/100 | Verdict: ${auditData.verdict_refonte}`);
+  // ════════════════════════════════════════════════════════════════
+  // PHASE 3.5 — DATA REDUCER (INDUSTRIAL LAYER)
+  // ════════════════════════════════════════════════════════════════
+  console.log(`[3.5/8] DataReducer → compression & signaux...`);
+  const reducedInput = await dataReducer(scannedData, lighthouseData, lead.secteur, lead.ville);
 
   // ════════════════════════════════════════════════════════════════
-  // PHASE 4 — STRATÈGE
-  // Input  : auditData (piliers + score + estimation_impact) + secteur
-  //          ⚠️ Ne PAS passer tout l'audit — seulement ce dont il a besoin
-  // Output : { angle_approche, point_friction_majeur, solution_strategique,
-  //            ton_recommande, buyer_persona, timing_ideal, preuve_sociale, budget_roi }
-  // Guard  : aucun rejet possible ici — on continue même si output dégradé
+  // PHASE 4 — AUDIT ULTRA
   // ════════════════════════════════════════════════════════════════
-  console.log(`[4/7] Stratège → angle d'attaque...`);
+  console.log(`[4/8] Audit Ultra...`);
+  const auditData: any = await runUltraAudit(reducedInput);
+
+  if (!guardAudit(auditData)) {
+    monitoring.captureLeadProcessed(lead.site_web, 'error_audit', 0);
+    return { leadId: leadId || null, status: 'error_audit', raison_rejet: 'Audit returned invalid data' };
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // PHASE 5 — STRATÈGE
+  // ════════════════════════════════════════════════════════════════
+  console.log(`[5/8] Stratège → angle d'attaque...`);
   const strategyData = await strategeAgent(
     {
-      // On passe uniquement les données utiles au Stratège
-      score_global:      auditData.score_global,
-      analyse_piliers:   auditData.analyse_piliers,
-      core_web_vitals:   auditData.core_web_vitals,
-      estimation_impact: auditData.estimation_impact,
-      verdict_refonte:   auditData.verdict_refonte,
-      opportunite_majeure: auditData.opportunite_majeure,
+      score_global:        auditData.score_global,
+      faiblesses_majeures: auditData.faiblesses_majeures,
+      estimation_impact:   auditData.pertes_business, // Align with AuditUltraV4
+      verdict_refonte:     auditData.verdict,        // Align with AuditUltraV4
+      enriched_data:       enrichedData
     },
     lead.secteur
   );
-  console.log(`[4/7] Stratège → angle: "${strategyData.angle_approche}" | ton: ${strategyData.ton_recommande}`);
 
   // ════════════════════════════════════════════════════════════════
-  // PHASE 5 — ARCHITECTE
-  // Input  : auditData (piliers + sitemap_cible + score) + secteur + ville
-  // Output : { arborescence, wireframe, sections_cles, proposition_valeur,
-  //            cta, style_visuel, conversion_funnel, fonctionnalites }
-  // Guard  : aucun rejet — fallback sectoriel si erreur
+  // PHASE 6 — ARCHITECTE
   // ════════════════════════════════════════════════════════════════
-  console.log(`[5/7] Architecte → structure du site...`);
+  console.log(`[6/8] Architecte → structure du site...`);
   const archiData = await runArchitecteAgent(
     {
       score_global:        auditData.score_global,
-      analyse_piliers:     auditData.analyse_piliers,
-      sitemap_cible:       auditData.sitemap_cible,
-      sitemap_actuel:      auditData.sitemap_actuel,
+      faiblesses_majeures: auditData.faiblesses_majeures,
       verdict_refonte:     auditData.verdict_refonte,
-      opportunite_majeure: auditData.opportunite_majeure,
     },
     lead.secteur,
     lead.ville
   );
-  console.log(`[5/7] Architecte → ${archiData.arborescence?.length || 0} pages | CTA: "${archiData.cta}"`);
 
   // ════════════════════════════════════════════════════════════════
-  // PHASE 6 — COPYWRITER
-  // Input  : strategyData (complet) + leadInfo enrichi (avec audit + archi)
-  // Output : { objet, corps, variante_a, variante_b, variante_c, recommandation }
-  // Guard  : email destinataire trouvé
+  // PHASE 6.5 — CLOSER (V5)
   // ════════════════════════════════════════════════════════════════
-  console.log(`[6/7] Copywriter → rédaction email...`);
+  console.log(`[6.5/8] Closer → roadmap & offre commerciale...`);
+  const closerResult = await runCloserAgent({
+    audit: auditData,
+    strategy: strategyData,
+    archi: archiData,
+    secteur: lead.secteur
+  });
 
-  // Vérification email destinataire AVANT de dépenser des tokens
+  // ════════════════════════════════════════════════════════════════
+  // PHASE 6.7 — PROPOSAL GENERATOR (V5)
+  // ════════════════════════════════════════════════════════════════
+  console.log(`[6.7/8] Proposal → rédaction proposition commerciale...`);
+  const proposalResult = await runProposalGenerator(auditData, closerResult, lead);
+
+  // ════════════════════════════════════════════════════════════════
+  // PHASE 7 — COPYWRITER (PLUME)
+  // ════════════════════════════════════════════════════════════════
+  console.log(`[7/8] Copywriter → rédaction email...`);
   const emailDestinataire = guardEmail(lead, eclaireurResult);
-  if (!emailDestinataire) {
-    monitoring.captureLeadProcessed(lead.site_web, 'rejected_no_email', auditData.score_global);
-    const leadId = await saveLead({
-      ...lead,
-      status: 'no_email',
-      score: auditData.score_global,
-      audit_data: auditData,
-      strategy: strategyData,
-      archi_data: archiData,
-    });
-    return { leadId, status: 'rejected_no_email', score: auditData.score_global, raison_rejet: 'Aucun email destinataire trouvé' };
-  }
-
-  const emailRaw = await runCopywriterAgent(
-    strategyData,
-    {
-      nom:        lead.nom,
-      site_web:   lead.site_web,
-      secteur:    lead.secteur,
-      ville:      lead.ville,
-      // Données chainées depuis les agents précédents
-      audit_data: auditData,
-      archi_data: archiData,
-    }
-  );
-  console.log(`[6/7] Copywriter → objet: "${emailRaw.objet?.slice(0, 60)}..."`);
+  
+  const parsedEmail = await runCopywriterAgent(strategyData, {
+    ...lead,
+    audit_data: auditData,
+    archi_data: archiData,
+    closer_data: closerResult,
+    proposal_data: proposalResult,
+    enriched_data: enrichedData,
+  });
 
   // ════════════════════════════════════════════════════════════════
-  // PHASE 7 — CRITIQUE (validation finale)
-  // Input  : output complet du Copywriter (3 variantes)
-  // Output : { objet_final, corps_final, qualite_score, envoyable, variante_choisie, blocages }
-  // Guard  : envoyable === true && qualite_score >= 60
+  // PHASE 8 — CRITIQUE
   // ════════════════════════════════════════════════════════════════
-  console.log(`[7/7] Critique → validation qualité...`);
-  const critiqueResult = await critiqueAgent(emailRaw);
-  console.log(`[7/7] Critique → score: ${critiqueResult.qualite_score}/100 | Envoyable: ${critiqueResult.envoyable}`);
-
-  if (!guardCritique(critiqueResult)) {
-    monitoring.captureLeadProcessed(lead.site_web, 'rejected_quality', auditData.score_global);
-    // Sauvegarde quand même — l'humain peut corriger manuellement depuis la War Room
-    const leadId = await saveLead({
-      ...lead,
-      status: 'quality_review',
-      email_destinataire: emailDestinataire,
-      score: auditData.score_global,
-      audit_data:   auditData,
-      strategy:     strategyData,
-      archi_data:   archiData,
-      email_draft:  { ...emailRaw, critique: critiqueResult },
-      qualification: qualifResult,
-    });
-    return {
-      leadId,
-      status: 'rejected_quality',
-      score: auditData.score_global,
-      raison_rejet: `Score qualité email insuffisant (${critiqueResult.qualite_score}/100): ${critiqueResult.blocages?.join(', ')}`
-    };
-  }
+  console.log(`[8/8] Critique → validation qualité...`);
+  const critiqueResult = await critiqueAgent(parsedEmail);
 
   // ════════════════════════════════════════════════════════════════
-  // SAUVEGARDE FINALE — Lead EMAIL_READY
+  // SAUVEGARDE FINALE — UPDATE SUPABASE
   // ════════════════════════════════════════════════════════════════
   const duration = Math.round((Date.now() - startTime) / 1000);
   console.log(`\n✅ [Pipeline] SUCCÈS → ${lead.nom} | Score: ${auditData.score_global}/100 | Durée: ${duration}s`);
 
-  const leadId = await saveLead({
+  const finalUpdate = {
     ...lead,
     status:             'email_ready',
+    funnel_stage:       'email_ready',
     email_destinataire: emailDestinataire,
-    score:              auditData.score_global,
+    score:              qualifResult.score_global,
+    business_potential_score: qualifResult.business_potential?.score || 0,
+    estimated_deal_value: qualifResult.business_potential?.estimated_deal_value || 0,
     priorite:           qualifResult.priorite,
+    score_opportunite:  enrichedData.opportunite_score,
 
-    // Données complètes pour la War Room
+    // ✅ CHAMPS PLATS (Dashboard compliance)
+    email_objet:      critiqueResult.objet_final || parsedEmail.objet || '',
+    email_body:       critiqueResult.corps_final || parsedEmail.corps || '',
+    
+    // Données riches pour la War Room (Structure Plate)
     qualification:  qualifResult,
     eclaireur:      eclaireurResult,
     audit_data:     auditData,
     strategy:       strategyData,
     archi_data:     archiData,
+    closer_output:  closerResult,
+    proposal_data:  proposalResult,
+    enriched_data:  enrichedData,
     email_final: {
       objet:            critiqueResult.objet_final,
       corps:            critiqueResult.corps_final,
       variante_choisie: critiqueResult.variante_choisie,
       qualite_score:    critiqueResult.qualite_score,
-      variante_a:       emailRaw.variante_a,
-      variante_b:       emailRaw.variante_b,
-      variante_c:       emailRaw.variante_c,
     },
 
-    // Métadonnées
     pipeline_duration_seconds: duration,
     processed_at: new Date().toISOString(),
-  });
+    updated_at: new Date()
+  };
 
-  monitoring.captureLeadProcessed(lead.site_web, 'success', auditData.score_global);
+  // 🔥 Nettoyage de la duplication (Dashboard compliance)
+  (finalUpdate as any).proposition_data = null;
+
+  if (leadId) {
+    const { error: updateError } = await supabaseAdmin.from('leads').update(finalUpdate).eq('id', leadId);
+    if (updateError) {
+      console.error('[DB] Error updating lead:', updateError);
+      throw updateError;
+    }
+  } else {
+    leadId = await saveLead(finalUpdate);
+  }
+
+  monitoring.captureLeadProcessed(lead.site_web, 'email_ready', auditData.score_global);
 
   return {
     leadId,
-    status: 'email_ready',
+    status: 'email_ready', // Keep external interface compatible
     score: auditData.score_global,
     email_ready: true,
   };

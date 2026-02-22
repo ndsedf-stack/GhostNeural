@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- ⚠️ LEGACY — ORCHESTRATION N8N (DÉPRÉCIÉ) -->
+<!-- GhostAgency V5 utilise désormais l'Industrial Orchestrator natif. -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
