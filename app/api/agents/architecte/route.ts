@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runArchitecteAgent } from '@/lib/agents/architecte';
 
+// Force Trigger Vercel Build - Sync Check 2026-02-22 22:18
 export async function POST(req: NextRequest) {
   try {
     const { 
